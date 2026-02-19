@@ -6,6 +6,7 @@ Replaces APIManager.ahk (777 lines) with ~150 lines.
 """
 import sys
 import os
+import re
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir not in sys.path:
@@ -183,6 +184,17 @@ def _send_openai(api_key, model, system_prompt, user_message, max_tokens, temper
 
 # --- Error translation ---
 
+def _translate_error(provider, e, model=""):
+    """Route to the appropriate provider-specific error translator."""
+    if provider == "claude":
+        return _translate_claude_error(e)
+    elif provider == "gemini":
+        return _translate_gemini_error(e, model)
+    elif provider == "openai":
+        return _translate_openai_error(e)
+    return f"API error: {e}"
+
+
 def _translate_claude_error(e):
     """Translate anthropic SDK exceptions to user-friendly messages."""
     try:
@@ -190,7 +202,13 @@ def _translate_claude_error(e):
         if isinstance(e, anthropic.AuthenticationError):
             return "Authentication failed - check your Claude API key in Settings."
         if isinstance(e, anthropic.RateLimitError):
-            return "Rate limit exceeded - please wait and try again."
+            # Check for retry-after header hint in the message
+            retry_hint = ""
+            err_str = str(e)
+            retry_match = re.search(r"retry.* (\d+)\s*s", err_str, re.IGNORECASE)
+            if retry_match:
+                retry_hint = f" Try again in ~{retry_match.group(1)} seconds."
+            return f"Rate limit exceeded.{retry_hint} Please wait and try again."
         if isinstance(e, anthropic.APIConnectionError):
             return "Could not connect to Claude API servers."
         if isinstance(e, anthropic.APIStatusError):
@@ -202,10 +220,11 @@ def _translate_claude_error(e):
 
 def _translate_gemini_error(e, model=""):
     """Translate google-genai exceptions to user-friendly messages."""
-    err_str = str(e).lower()
-    if "403" in err_str or "permission" in err_str:
+    err_str = str(e)
+    err_lower = err_str.lower()
+    if "403" in err_lower or "permission" in err_lower:
         return "Authentication failed - check your Gemini API key in Settings."
-    if "429" in err_str or "resource exhausted" in err_str:
+    if "429" in err_lower or "resource exhausted" in err_lower:
         if "gemini-2.5-pro" in model:
             return (
                 "Gemini Pro requires a paid API tier. Options: "
@@ -213,10 +232,19 @@ def _translate_gemini_error(e, model=""):
                 "(2) Upgrade your Gemini API plan, or "
                 "(3) Use Proofreading mode (uses Gemini Flash)"
             )
-        return "Rate limit exceeded - please wait and try again."
-    if "400" in err_str:
+        # Extract retry delay if present (e.g. "Please retry in 17.818436202s")
+        retry_hint = ""
+        retry_match = re.search(r"retry in ([\d.]+)s", err_str, re.IGNORECASE)
+        if retry_match:
+            retry_secs = int(float(retry_match.group(1)) + 0.5)
+            retry_hint = f" Try again in ~{retry_secs} seconds."
+        # Detect free tier quota
+        if "free_tier" in err_lower:
+            return f"Gemini free tier rate limit reached.{retry_hint} To avoid this, upgrade your Gemini API plan or switch to Claude in Settings."
+        return f"Rate limit exceeded.{retry_hint} Please wait and try again."
+    if "400" in err_lower:
         return "Bad request - check your Gemini API configuration."
-    if "500" in err_str or "503" in err_str:
+    if "500" in err_lower or "503" in err_lower:
         return "Gemini API server error - please try again later."
     return f"Error connecting to Gemini API: {e}"
 
@@ -228,7 +256,10 @@ def _translate_openai_error(e):
         if isinstance(e, openai.AuthenticationError):
             return "Authentication failed - check your OpenAI API key in Settings."
         if isinstance(e, openai.RateLimitError):
-            return "Rate limit exceeded - please wait and try again."
+            err_str = str(e).lower()
+            if "insufficient_quota" in err_str or "exceeded your current quota" in err_str:
+                return "OpenAI quota exceeded. Check your billing details at platform.openai.com."
+            return "Rate limit exceeded. Please wait and try again."
         if isinstance(e, openai.APIConnectionError):
             return "Could not connect to OpenAI API servers."
         if isinstance(e, openai.BadRequestError):
@@ -387,9 +418,10 @@ def stream_to_api(provider, api_key, model, system_prompt, messages,
         logger.info("Streaming completed successfully", extra={"provider": provider})
 
     except Exception as e:
+        error_msg = _translate_error(provider, e, model)
         logger.error("Streaming failed", extra={"provider": provider, "error": str(e)})
         Path(status_file).write_text(
-            json.dumps({"done": True, "error": str(e)}), encoding="utf-8"
+            json.dumps({"done": True, "error": error_msg}), encoding="utf-8"
         )
 
 

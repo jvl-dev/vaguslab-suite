@@ -250,6 +250,18 @@ class SettingsGui {
             ; Save config to file
             ConfigManager.SaveConfig()
 
+            ; Launch DICOM service if demographic extraction is enabled
+            ; (handles first-time enable and restart-after-settings-change)
+            if (ConfigManager.config["Beta"].Get("demographic_extraction_enabled", false)) {
+                try {
+                    cacheDir := ConfigManager.config["Beta"].Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT)
+                    EnsureDicomService(cacheDir)
+                    StartDicomHeartbeat()
+                } catch as err {
+                    Logger.Warning("Failed to ensure DICOM service after settings change", {error: err.Message})
+                }
+            }
+
             ; Update tray menu mode
             UpdateModeMenu()
 

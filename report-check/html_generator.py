@@ -376,7 +376,7 @@ def _build_follow_up_section(session_id):
     return (
         f'<div id="followUpSection" class="report-section follow-up-section"'
         f' data-session-id="{escape_html(session_id)}">\n'
-        '    <h2 class="original-report-header">Follow-up Questions</h2>\n'
+        '    <h2 class="original-report-header">Follow-up</h2>\n'
         '    <div id="conversationThread" class="conversation-thread"></div>\n'
         '    <div id="typingIndicator" class="typing-indicator" style="display:none;">\n'
         '        <span class="typing-dot"></span>\n'

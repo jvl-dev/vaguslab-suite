@@ -123,17 +123,14 @@ class SettingsGui {
         apiKey := providerData.apiKey
         js .= "setValue('APIKey', '" this._EscapeJS(apiKey) "');"
 
-        ; API URL
-        apiUrl := providerData.apiUrl
-        js .= "setValue('APIURL', '" this._EscapeJS(apiUrl) "');"
+        ; Model dropdowns (on Mode tab, populated from provider)
+        js .= this._BuildModelDropdowns(provider)
 
-        ; Model
-        currentModel := providerData.currentModel
-        js .= this._BuildModelDropdown(provider, mode)
-        js .= "setSelectValue('Model', '" this._EscapeJS(currentModel) "');"
-
-        ; Auto-verify (not stored in config, default to false)
-        js .= "setCheckbox('AutoVerify', false);"
+        ; Set selected values for each mode's dropdown
+        comprehensiveModel := settings.Get("comprehensive_" . provider . "_model", Constants.GetDefaultModel(provider, "comprehensive"))
+        proofreadingModel := settings.Get("proofreading_" . provider . "_model", Constants.GetDefaultModel(provider, "proofreading"))
+        js .= "setSelectValue('ComprehensiveModel', '" this._EscapeJS(comprehensiveModel) "');"
+        js .= "setSelectValue('ProofreadingModel', '" this._EscapeJS(proofreadingModel) "');"
 
         ; API Status
         statusData := SettingsPresenter.GetAPIKeyStatus(apiKey, provider, this.lastTestedKey, this.lastTestResult)
@@ -186,19 +183,17 @@ class SettingsGui {
         this.wvGui.ExecuteScriptAsync(js)
     }
 
-    ; Build model dropdown options for current provider and mode
-    static _BuildModelDropdown(provider, mode) {
-        js := "document.getElementById('Model').innerHTML = '';"
-
-        models := SettingsPresenter.GetModelsForProvider(provider, mode)
-        if (models && models.Length > 0) {
-            for model in models {
-                escapedModel := this._EscapeJS(model)
-                js .= "document.getElementById('Model').innerHTML += '<option value=`"" . escapedModel . "`">" . escapedModel . "</option>';"
-            }
+    ; Build model dropdown options for both Comprehensive and Proofreading dropdowns
+    static _BuildModelDropdowns(provider) {
+        models := Constants.GetModels(provider)
+        modelsJS := "["
+        for model in models {
+            if (A_Index > 1)
+                modelsJS .= ","
+            modelsJS .= "'" . this._EscapeJS(model) . "'"
         }
-
-        return js
+        modelsJS .= "]"
+        return "populateModelDropdowns(" . modelsJS . ");"
     }
 
     ; ==========================================

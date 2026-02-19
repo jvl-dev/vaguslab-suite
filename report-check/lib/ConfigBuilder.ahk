@@ -20,41 +20,35 @@ class ConfigBuilder {
     }
 
     ; Build Settings section
-    ; Includes: prompt_type, models, URLs, targeted_review, debug_logging, startup, dark mode
+    ; Includes: prompt_type, models, targeted_review, debug_logging, startup, dark mode
     static _BuildSettingsConfig(formData) {
         settings := Map()
 
-        ; Current provider for determining which model/URL to save
+        ; Current provider for determining which models to save
         provider := formData.Get("Provider", "claude")
 
         ; Review mode (prompt_type)
         mode := formData.Get("reviewMode", "comprehensive")
         settings["prompt_type"] := mode
 
-        ; API URLs - preserve all provider URLs
-        settings["claude_url"] := this._GetProviderValue(formData, "APIURL", provider, "claude",
-            "https://api.anthropic.com/v1/messages")
-        settings["gemini_url"] := this._GetProviderValue(formData, "APIURL", provider, "gemini",
-            "https://generativelanguage.googleapis.com/v1beta/models/")
-        settings["openai_url"] := this._GetProviderValue(formData, "APIURL", provider, "openai",
-            "https://api.openai.com/v1/chat/completions")
+        ; Models — the form now has explicit ComprehensiveModel and ProofreadingModel fields
+        ; Save them for the active provider; preserve existing config for other providers
+        existingSettings := ConfigManager.config.Has("Settings") ? ConfigManager.config["Settings"] : Map()
 
-        ; Models - preserve all provider models
-        ; Comprehensive models
-        settings["comprehensive_claude_model"] := this._GetProviderValue(formData, "Model", provider, "claude",
-            Constants.GetDefaultModel("claude", "comprehensive"), mode, "comprehensive")
-        settings["comprehensive_gemini_model"] := this._GetProviderValue(formData, "Model", provider, "gemini",
-            Constants.GetDefaultModel("gemini", "comprehensive"), mode, "comprehensive")
-        settings["comprehensive_openai_model"] := this._GetProviderValue(formData, "Model", provider, "openai",
-            Constants.GetDefaultModel("openai", "comprehensive"), mode, "comprehensive")
-
-        ; Proofreading models
-        settings["proofreading_claude_model"] := this._GetProviderValue(formData, "Model", provider, "claude",
-            Constants.GetDefaultModel("claude", "proofreading"), mode, "proofreading")
-        settings["proofreading_gemini_model"] := this._GetProviderValue(formData, "Model", provider, "gemini",
-            Constants.GetDefaultModel("gemini", "proofreading"), mode, "proofreading")
-        settings["proofreading_openai_model"] := this._GetProviderValue(formData, "Model", provider, "openai",
-            Constants.GetDefaultModel("openai", "proofreading"), mode, "proofreading")
+        for targetProvider in ["claude", "gemini", "openai"] {
+            for targetMode in ["comprehensive", "proofreading"] {
+                configKey := targetMode . "_" . targetProvider . "_model"
+                if (targetProvider = provider) {
+                    ; Active provider — read from the form dropdown
+                    formField := (targetMode = "comprehensive") ? "ComprehensiveModel" : "ProofreadingModel"
+                    formValue := formData.Get(formField, "")
+                    settings[configKey] := (formValue != "") ? formValue : Constants.GetDefaultModel(targetProvider, targetMode)
+                } else {
+                    ; Non-active provider — preserve existing config value
+                    settings[configKey] := existingSettings.Get(configKey, Constants.GetDefaultModel(targetProvider, targetMode))
+                }
+            }
+        }
 
         ; Targeted review (child of demographic extraction)
         settings["targeted_review_enabled"] := this._ParseBool(formData.Get("TargetedReviewEnabled", false))
@@ -130,40 +124,6 @@ class ConfigBuilder {
         beta["dicom_cache_directory"] := dicomDir
 
         return beta
-    }
-
-    ; Helper: Get provider-specific value with fallback
-    ; If the current provider matches, use the form value
-    ; Otherwise, preserve the existing value from ConfigManager
-    ; @param formData - Form data Map
-    ; @param field - Field name in form data (e.g., "Model", "APIURL")
-    ; @param currentProvider - Current provider from form
-    ; @param targetProvider - Provider we're getting value for
-    ; @param defaultValue - Default if not found
-    ; @param currentMode - Current mode (for model selection)
-    ; @param targetMode - Target mode (for model selection)
-    static _GetProviderValue(formData, field, currentProvider, targetProvider, defaultValue, currentMode := "", targetMode := "") {
-        ; If we're getting value for the current provider and current mode (or no mode specified), use form value
-        if (currentProvider = targetProvider && (currentMode = "" || currentMode = targetMode)) {
-            formValue := formData.Get(field, "")
-            if (formValue != "" && formValue != "Default API URL") {
-                return formValue
-            }
-        }
-
-        ; Otherwise, preserve existing value from ConfigManager
-        existingSettings := ConfigManager.config.Has("Settings") ? ConfigManager.config["Settings"] : Map()
-
-        ; Determine the config key based on field and provider
-        if (field = "APIURL") {
-            configKey := targetProvider "_url"
-        } else if (field = "Model") {
-            configKey := targetMode "_" targetProvider "_model"
-        } else {
-            return defaultValue
-        }
-
-        return existingSettings.Get(configKey, defaultValue)
     }
 
     ; Helper: Parse boolean from JavaScript value

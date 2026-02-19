@@ -16,6 +16,9 @@ bruce-helper/config.ini
 # Claude Code local settings
 .claude/settings.local.json
 
+# Bundles
+*.bundle
+
 # Editor / OS junk
 *.swp
 *.bak

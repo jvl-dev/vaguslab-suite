@@ -81,9 +81,6 @@ class ConfigManager {
                     openai_verified_date: ""
                 },
                 settings: {
-                    claude_url: "https://api.anthropic.com/v1/messages",
-                    gemini_url: "https://generativelanguage.googleapis.com/v1beta/models/",
-                    openai_url: "https://api.openai.com/v1/chat/completions",
                     comprehensive_claude_model: Constants.GetDefaultModel("claude", "comprehensive"),
                     comprehensive_gemini_model: Constants.GetDefaultModel("gemini", "comprehensive"),
                     comprehensive_openai_model: Constants.GetDefaultModel("openai", "comprehensive"),
@@ -187,10 +184,6 @@ class ConfigManager {
             ; NOTE: System prompt is read from system_prompt.txt file, not stored in config
 
             ; Settings section
-            claudeUrl := this._ExtractJSONValue(jsonContent, "claude_url")
-            geminiUrl := this._ExtractJSONValue(jsonContent, "gemini_url")
-            openaiUrl := this._ExtractJSONValue(jsonContent, "openai_url")
-
             ; Load mode-specific models
             comprehensiveClaudeModel := this._ExtractJSONValue(jsonContent, "comprehensive_claude_model")
             comprehensiveGeminiModel := this._ExtractJSONValue(jsonContent, "comprehensive_gemini_model")
@@ -202,13 +195,9 @@ class ConfigManager {
             ; Handle migration from old single model format
             oldClaudeModel := this._ExtractJSONValue(jsonContent, "claude_model")
             oldGeminiModel := this._ExtractJSONValue(jsonContent, "gemini_model")
-            oldApiUrl := this._ExtractJSONValue(jsonContent, "api_url")
             oldModel := this._ExtractJSONValue(jsonContent, "model")
 
             ; Migrate old format to new mode-specific format
-            if (oldApiUrl != "" && claudeUrl = "") {
-                claudeUrl := oldApiUrl
-            }
             if (oldModel != "" && comprehensiveClaudeModel = "") {
                 comprehensiveClaudeModel := oldModel
             }
@@ -250,9 +239,6 @@ class ConfigManager {
             }
 
             this.config["Settings"] := Map(
-                "claude_url", claudeUrl != "" ? claudeUrl : "https://api.anthropic.com/v1/messages",
-                "gemini_url", geminiUrl != "" ? geminiUrl : "https://generativelanguage.googleapis.com/v1beta/models/",
-                "openai_url", openaiUrl != "" ? openaiUrl : "https://api.openai.com/v1/chat/completions",
                 "comprehensive_claude_model", comprehensiveClaudeModel != "" ? comprehensiveClaudeModel : Constants.GetDefaultModel("claude", "comprehensive"),
                 "comprehensive_gemini_model", comprehensiveGeminiModel != "" ? comprehensiveGeminiModel : Constants.GetDefaultModel("gemini", "comprehensive"),
                 "comprehensive_openai_model", comprehensiveOpenaiModel != "" ? comprehensiveOpenaiModel : Constants.GetDefaultModel("openai", "comprehensive"),
@@ -352,9 +338,6 @@ class ConfigManager {
                     openai_verified_date: api.Get("openai_verified_date", "")
                 },
                 settings: {
-                    claude_url: settings.Get("claude_url", "https://api.anthropic.com/v1/messages"),
-                    gemini_url: settings.Get("gemini_url", "https://generativelanguage.googleapis.com/v1beta/models/"),
-                    openai_url: settings.Get("openai_url", "https://api.openai.com/v1/chat/completions"),
                     comprehensive_claude_model: settings.Get("comprehensive_claude_model", Constants.GetDefaultModel("claude", "comprehensive")),
                     comprehensive_gemini_model: settings.Get("comprehensive_gemini_model", Constants.GetDefaultModel("gemini", "comprehensive")),
                     comprehensive_openai_model: settings.Get("comprehensive_openai_model", Constants.GetDefaultModel("openai", "comprehensive")),
@@ -466,19 +449,6 @@ class ConfigManager {
         return apiKey
     }
 
-    ; Get URL for specific provider
-    static GetProviderURL(provider) {
-        urlField := provider . "_url"
-        if (provider = "claude") {
-            return this.config["Settings"].Get(urlField, "https://api.anthropic.com/v1/messages")
-        } else if (provider = "gemini") {
-            return this.config["Settings"].Get(urlField, "https://generativelanguage.googleapis.com/v1beta/models/")
-        } else if (provider = "openai") {
-            return this.config["Settings"].Get(urlField, "https://api.openai.com/v1/chat/completions")
-        }
-        return ""
-    }
-
     ; Get model for specific provider based on current mode
     static GetProviderModel(provider, modeOverride := "") {
         ; Get current mode, or use override if provided
@@ -500,11 +470,6 @@ class ConfigManager {
     static GetAPIKey() {
         provider := this.GetProvider()
         return this.GetProviderAPIKey(provider)
-    }
-
-    static GetAPIURL() {
-        provider := this.GetProvider()
-        return this.GetProviderURL(provider)
     }
 
     static GetModel() {
@@ -1289,12 +1254,6 @@ class ConfigManager {
         if (provider != "claude" && provider != "gemini" && provider != "openai") {
             Logger.Warning("Invalid provider value, resetting to default", {value: provider})
             this.config["API"]["provider"] := "claude"
-            fixed := true
-        }
-
-        ; Ensure OpenAI settings exist
-        if (!settings.Has("openai_url")) {
-            settings["openai_url"] := "https://api.openai.com/v1/chat/completions"
             fixed := true
         }
 

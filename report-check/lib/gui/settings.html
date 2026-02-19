@@ -462,8 +462,25 @@ textarea:focus {
             Full analysis including clinical effectiveness, diagnostic reasoning, clarity, structure, technical accuracy, and proofreading. Best for complex report review before signing. If demographic and targeted review suggestions are enabled in beta settings this will trigger an additional API call.
         </div>
         <div id="modeGeminiWarning" class="warning-text">
-            Note: Comprehensive mode defaults to paid 2.5 Pro. You can change to free 2.5 Flash in API tab.
+            Note: Comprehensive mode defaults to paid 2.5 Pro. You can change the model below.
         </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Default Models</div>
+        <div class="form-group">
+            <label>Comprehensive:</label>
+            <select id="ComprehensiveModel">
+                <!-- Populated dynamically based on provider -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Proofreading:</label>
+            <select id="ProofreadingModel">
+                <!-- Populated dynamically based on provider -->
+            </select>
+        </div>
+        <div class="hint">Models available depend on the AI provider selected in the API tab.</div>
     </div>
 </div>
 
@@ -510,26 +527,6 @@ textarea:focus {
         <div id="apiStatus" class="api-status"></div>
     </div>
 
-    <div class="card">
-        <div class="card-header">Configuration</div>
-        <div class="form-group form-group-wide">
-            <label id="apiUrlLabel">API URL:</label>
-            <input type="text" id="APIURL" placeholder="Default API URL">
-        </div>
-        <div class="form-group">
-            <label id="modelLabel">Model:</label>
-            <select id="Model">
-                <!-- Populated dynamically based on provider -->
-            </select>
-        </div>
-        <div class="toggle-group">
-            <label class="toggle">
-                <input type="checkbox" id="AutoVerify">
-                <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Auto-verify API key when model changed</span>
-        </div>
-    </div>
 </div>
 
 <!-- ==================== Beta Tab ==================== -->
@@ -772,9 +769,10 @@ function collectFormData() {
         // API
         Provider: val('Provider'),
         APIKey: val('APIKey'),
-        APIURL: val('APIURL'),
-        Model: val('Model'),
-        AutoVerify: chk('AutoVerify'),
+
+        // Models (on Mode tab, but depend on provider)
+        ComprehensiveModel: val('ComprehensiveModel'),
+        ProofreadingModel: val('ProofreadingModel'),
 
         // Beta
         BetaModeOverrideHotkeys: chk('BetaModeOverrideHotkeys'),
@@ -858,6 +856,25 @@ function syncSegmentedControl(mode) {
     });
     const desc = document.getElementById('modeDescription');
     if (desc) desc.textContent = MODE_DESCRIPTIONS[mode] || '';
+}
+
+function populateModelDropdowns(models) {
+    ['ComprehensiveModel', 'ProofreadingModel'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var current = el.value;
+        el.innerHTML = '';
+        (models || []).forEach(function(m) {
+            var opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m;
+            el.appendChild(opt);
+        });
+        // Restore previous selection if still available
+        if (current && Array.prototype.some.call(el.options, function(o) { return o.value === current; })) {
+            el.value = current;
+        }
+    });
 }
 
 function setText(id, text) {

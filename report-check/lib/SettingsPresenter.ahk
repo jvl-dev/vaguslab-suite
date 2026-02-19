@@ -126,30 +126,15 @@ class SettingsPresenter {
         return currentStoredKey
     }
 
-    ; Save provider-specific settings (URL, model)
+    ; Save provider-specific settings (model)
     static _SaveProviderSettings(provider, selectedMode, values) {
         ; Update provider in configuration
         ConfigManager.config["API"]["provider"] := provider
 
-        ; Update provider-specific URL and model
-        if (provider = "claude") {
-            ConfigManager.config["Settings"]["claude_url"] := values.APIURL
-            if (selectedMode != "") {
-                modelField := selectedMode . "_claude_model"
-                ConfigManager.config["Settings"][modelField] := values.Model
-            }
-        } else if (provider = "gemini") {
-            ConfigManager.config["Settings"]["gemini_url"] := values.APIURL
-            if (selectedMode != "") {
-                modelField := selectedMode . "_gemini_model"
-                ConfigManager.config["Settings"][modelField] := values.Model
-            }
-        } else if (provider = "openai") {
-            ConfigManager.config["Settings"]["openai_url"] := values.APIURL
-            if (selectedMode != "") {
-                modelField := selectedMode . "_openai_model"
-                ConfigManager.config["Settings"][modelField] := values.Model
-            }
+        ; Update provider-specific model
+        if (selectedMode != "") {
+            modelField := selectedMode . "_" . provider . "_model"
+            ConfigManager.config["Settings"][modelField] := values.Model
         }
     }
 
@@ -179,7 +164,7 @@ class SettingsPresenter {
     }
 
     ; Get provider-specific data for UI display
-    ; Returns: {apiKey: string, apiUrl: string, models: array, currentModel: string}
+    ; Returns: {apiKey: string, models: array, currentModel: string}
     static GetProviderData(provider, promptType) {
         api := ConfigManager.config["API"]
         settings := ConfigManager.config["Settings"]
@@ -191,17 +176,9 @@ class SettingsPresenter {
         }
 
         ; Provider-specific data (models and defaults from Constants registry)
-        urlField := provider . "_url"
         modelField := promptType . "_" . provider . "_model"
         models := Constants.GetModels(provider)
         defaultModel := Constants.GetDefaultModel(provider, promptType)
-        if (provider = "claude") {
-            apiUrl := settings.Get(urlField, "https://api.anthropic.com/v1/messages")
-        } else if (provider = "gemini") {
-            apiUrl := settings.Get(urlField, "https://generativelanguage.googleapis.com/v1beta/models/")
-        } else if (provider = "openai") {
-            apiUrl := settings.Get(urlField, "https://api.openai.com/v1/chat/completions")
-        }
         currentModel := settings.Get(modelField, defaultModel)
 
         ; Find model index
@@ -215,7 +192,6 @@ class SettingsPresenter {
 
         return {
             apiKey: apiKey,
-            apiUrl: apiUrl,
             models: models,
             currentModel: currentModel,
             modelIndex: modelIndex

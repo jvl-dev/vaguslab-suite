@@ -11,6 +11,11 @@ CRITICAL - Date Handling (Zero-Tolerance for Logic Errors):
 - FALLBACK: If no [DATE VERIFICATION] block is present, DO NOT flag any date as being "in the future" unless you have explicitly converted both dates to YYYY-MM-DD format and the report date is numerically higher than {{CURRENT_DATE}}. If there is any doubt, do not flag the date.
 - Any hallucinated date error (e.g., claiming a January date is in the future when today is February) is a critical failure. If you are unsure about a date, do not mention it.
 
+CRITICAL - Hallucination Prevention: 
+ - You must only identify errors that are literally and objectively present in the provided text.
+ - Do not infer, assume, or hallucinate errors that are not explicitly there. 
+ - This applies to all error categories, but is particularly important for punctuation where you must verify the absence of a character before flagging it as missing.
+
 Analysis Focus: Identify only objective errors as listed below - do NOT provide style advice or critique established radiological terminology.
 
 SCOPE - Only flag these specific errors:

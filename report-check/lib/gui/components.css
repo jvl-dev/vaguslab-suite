@@ -1,0 +1,152 @@
+/* ==============================================
+   Mic Drop - Shared UI Components
+   Imported by all HTML pages alongside theme.css.
+   ============================================== */
+
+/* Reset & Base */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    background: var(--color-titlebar);
+    overflow: hidden;
+}
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Title Bar */
+.titlebar {
+    display: flex;
+    align-items: stretch;
+    height: 32px;
+    background: var(--color-titlebar);
+    color: var(--color-titlebar-text);
+    font-size: 10pt;
+    flex-shrink: 0;
+    user-select: none;
+    border-bottom: 2px solid var(--color-primary);
+}
+.titlebar-text {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    -webkit-app-region: drag;
+    cursor: default;
+}
+.titlebar-btn {
+    width: 46px;
+    cursor: pointer;
+    font-family: Webdings;
+    font-size: 11pt;
+    color: var(--color-titlebar-btn);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), color var(--transition);
+}
+.titlebar-btn:hover { background: var(--color-titlebar-btn-hover-bg); color: var(--color-titlebar-btn-hover); }
+.titlebar-btn-close:hover { background: var(--color-danger); color: var(--color-icon-on-status); }
+
+/* Cards / Sections */
+.card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-card);
+}
+.card-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 14px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+.card-description {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+.card-description:last-child {
+    margin-bottom: 0;
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), box-shadow var(--transition);
+}
+.btn-primary { background: var(--color-primary); color: var(--color-primary-text); }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-primary:disabled { background: var(--color-primary-disabled); cursor: not-allowed; }
+.btn-secondary { background: var(--color-bg-card); color: var(--color-text-label); border: 1px solid var(--color-border-input); }
+.btn-secondary:hover { background: var(--color-bg-hint); border-color: var(--color-border-input-hover); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* Form Controls */
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+.form-group label {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-label);
+}
+.form-group select,
+.form-group input[type="text"],
+.form-group input[type="password"] {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid var(--color-border-input);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg-card);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+}
+.form-group select:focus,
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus {
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+.form-group-wide input[type="text"] { max-width: 100%; }
+
+/* Links - WCAG AA compliant in both themes */
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+a:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+}
+a:focus {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}

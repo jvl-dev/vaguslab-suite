@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Check - Reviewing...</title>
+    <script>
+    // Apply theme immediately (before paint) to prevent light→dark flash
+    (function() {
+        var m = location.search.match(/[?&]theme=(dark|light)/);
+        if (m) document.documentElement.dataset.theme = m[1];
+    })();
+    </script>
+    <style>
+        :root {
+            /* Color Palette - Light Theme (default) */
+            --color-bg-primary: #f1f5f9;
+            --color-bg-secondary: #ffffff;
+            --color-bg-tertiary: #f8fafc;
+            --color-border: #e2e8f0;
+            --color-border-accent: #2a9d8f;
+            --color-text-primary: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-text-muted: #94a3b8;
+            --color-h1: #2a9d8f;
+            --color-h2: #388e3c;
+            --color-h3: #43a047;
+            --color-highlight: #2a9d8f;
+            --color-code: #d63384;
+            --color-accent-bg: rgba(42, 157, 143, 0.06);
+            --color-accent-border: rgba(42, 157, 143, 0.2);
+            --color-accent-shadow: rgba(42, 157, 143, 0.1);
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+            /* Non-theme-dependent */
+            --font-family-base: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            --font-family-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+            --font-size-base: 15px;
+            --font-size-sm: 13px;
+            --line-height-base: 1.6;
+            --line-height-tight: 1.4;
+            --border-radius: 6px;
+            --spacing-xs: 8px;
+            --spacing-sm: 12px;
+            --spacing-md: 20px;
+            --spacing-lg: 30px;
+            --spacing-xl: 40px;
+        }
+
+        /* Dark Theme Overrides */
+        [data-theme="dark"] {
+            --color-bg-primary: #1a1a1a;
+            --color-bg-secondary: #2d2d2d;
+            --color-bg-tertiary: #333333;
+            --color-border: #424242;
+            --color-border-accent: #4db6ac;
+            --color-text-primary: #e0e0e0;
+            --color-text-secondary: #b0b0b0;
+            --color-text-muted: #666666;
+            --color-h1: #4db6ac;
+            --color-h2: #66bb6a;
+            --color-h3: #81c784;
+            --color-highlight: #80cbc4;
+            --color-code: #ff6b9d;
+            --color-accent-bg: rgba(77, 182, 172, 0.08);
+            --color-accent-border: rgba(77, 182, 172, 0.25);
+            --color-accent-shadow: rgba(77, 182, 172, 0.15);
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-family-base);
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
+            margin: 0;
+            padding: var(--spacing-md);
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header — matches review template */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .header h1 {
+            font-family: var(--font-family-base);
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            margin: 0;
+            letter-spacing: -0.3px;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, var(--color-accent-bg) 0%, var(--color-accent-bg) 100%);
+            border-radius: 10px;
+            border: 1px solid var(--color-accent-border);
+            box-shadow: 0 4px 12px var(--color-accent-shadow);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .version {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            padding: 6px 10px;
+            background: linear-gradient(135deg, var(--color-accent-bg) 0%, var(--color-accent-bg) 100%);
+            border-radius: 8px;
+            border: 1px solid var(--color-accent-border);
+            box-shadow: 0 4px 12px var(--color-accent-shadow);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* Loading state */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px var(--spacing-md);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-border-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: var(--spacing-md);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .loading-subtext {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-muted);
+        }
+
+        /* Report sections — matches review template */
+        .report-section {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--box-shadow);
+        }
+
+        .original-report-header {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-h2);
+            margin: 0 0 var(--spacing-md) 0;
+            padding-bottom: var(--spacing-xs);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .analysis-content {
+            background: var(--color-bg-primary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--color-border);
+        }
+
+        /* Typography — matches review template */
+        h1, h2, h3 {
+            font-family: var(--font-family-base);
+            line-height: var(--line-height-tight);
+            margin-top: 0;
+        }
+
+        h2.section-header {
+            font-size: 20px;
+            color: var(--color-h2);
+            padding: 4px 8px;
+            background: var(--color-accent-bg);
+            border-left: 4px solid var(--color-border-accent);
+            border-radius: var(--border-radius);
+            margin: var(--spacing-md) 0;
+        }
+
+        h3.section-header {
+            font-size: 16px;
+            color: var(--color-h3);
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--color-accent-bg);
+            border-left: 4px solid var(--color-border-accent);
+            border-radius: var(--border-radius);
+            margin: var(--spacing-md) 0;
+        }
+
+        p { margin: 0 0 var(--spacing-md) 0; }
+
+        strong, .highlight {
+            color: var(--color-highlight);
+            font-weight: 600;
+        }
+
+        em {
+            color: var(--color-text-secondary);
+            font-style: italic;
+        }
+
+        code {
+            font-family: var(--font-family-mono);
+            font-size: 14px;
+            background: var(--color-bg-primary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid var(--color-border);
+            color: var(--color-code);
+        }
+
+        ul, ol {
+            margin: var(--spacing-md) 0;
+            padding-left: var(--spacing-lg);
+        }
+
+        li {
+            margin-bottom: var(--spacing-xs);
+            line-height: var(--line-height-base);
+        }
+
+        li::marker { color: var(--color-border-accent); }
+
+        .review-list {
+            margin-left: var(--spacing-md);
+            padding-left: var(--spacing-md);
+        }
+
+        /* Streaming cursor blink */
+        .streaming-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--color-border-accent);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: cursorBlink 1s step-end infinite;
+        }
+
+        @keyframes cursorBlink {
+            50% { opacity: 0; }
+        }
+
+        /* Error display */
+        .stream-error {
+            color: #ef5350;
+            background: rgba(239, 83, 80, 0.1);
+            border: 1px solid rgba(239, 83, 80, 0.3);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin-top: var(--spacing-md);
+            font-size: var(--font-size-sm);
+        }
+
+        /* Footer — matches review template */
+        .footer {
+            text-align: center;
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .footer-brand {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Report Check</h1>
+            <span class="version">Reviewing...</span>
+        </div>
+
+        <!-- Loading spinner (shown initially) -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <div class="loading-text">Analyzing your report...</div>
+            <div class="loading-subtext">Response will stream as it arrives</div>
+        </div>
+
+        <!-- Streaming content (shown when tokens arrive) -->
+        <div id="streamingSection" class="report-section" style="display:none;">
+            <h2 class="original-report-header">Analysis</h2>
+            <div class="analysis-content" id="streamingContent">
+                <span class="streaming-cursor"></span>
+            </div>
+        </div>
+
+        <!-- Error display -->
+        <div id="errorSection" class="stream-error" style="display:none;"></div>
+
+        <div class="footer">
+            <div class="footer-brand">Built by vaguslab</div>
+        </div>
+    </div>
+
+    <script>
+        var _streamAccumulator = '';
+        var _streamingStarted = false;
+
+        function appendStreamChunk(text) {
+            _streamAccumulator += text;
+
+            // On first chunk, switch from loading spinner to streaming content
+            if (!_streamingStarted) {
+                _streamingStarted = true;
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('streamingSection').style.display = 'block';
+                // Update header badge
+                document.querySelector('.version').textContent = 'Streaming...';
+            }
+
+            var contentEl = document.getElementById('streamingContent');
+            if (contentEl) {
+                contentEl.innerHTML = convertMarkdownToHtml(_streamAccumulator)
+                    + '<span class="streaming-cursor"></span>';
+            }
+        }
+
+        function streamComplete() {
+            // Remove cursor, finalize content
+            var contentEl = document.getElementById('streamingContent');
+            if (contentEl) {
+                contentEl.innerHTML = convertMarkdownToHtml(_streamAccumulator);
+            }
+            document.querySelector('.version').textContent = 'Loading final view...';
+        }
+
+        function streamError(msg) {
+            document.getElementById('loadingState').style.display = 'none';
+            var errorEl = document.getElementById('errorSection');
+            errorEl.textContent = 'Error: ' + msg;
+            errorEl.style.display = 'block';
+            document.querySelector('.version').textContent = 'Error';
+        }
+
+        /* Client-side Markdown to HTML (matches review template) */
+        function convertMarkdownToHtml(text) {
+            var html = text;
+            html = html.replace(/\r\n/g, '\n');
+
+            html = html.replace(/^### (.+)$/gm, '<h3 class="section-header">$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2 class="section-header">$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1 class="section-header">$1</h1>');
+
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="highlight">$1</strong>');
+            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/^[-*_]{3,}$/gm, '');
+
+            var lines = html.split('\n');
+            var result = [];
+            var inList = false;
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+
+                if (/^<h[1-6]/.test(line)) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(line);
+                } else if (/^[-*+]\s+(.+)$/.test(line)) {
+                    var m = line.match(/^[-*+]\s+(.+)$/);
+                    if (!inList) { result.push('<ul class="review-list">'); inList = true; }
+                    result.push('<li>' + m[1] + '</li>');
+                } else if (/^\d+\.\s+(.+)$/.test(line)) {
+                    var m = line.match(/^\d+\.\s+(.+)$/);
+                    if (!inList) { result.push('<ul class="review-list">'); inList = true; }
+                    result.push('<li>' + m[1] + '</li>');
+                } else if (line && line !== '.') {
+                    if (inList && !/^\s/.test(line) && line.length > 10) {
+                        result.push('</ul>');
+                        inList = false;
+                    }
+                    result.push('<p>' + line + '</p>');
+                } else {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                }
+            }
+            if (inList) result.push('</ul>');
+            return result.join('\n');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1128 @@
+; ==============================================
+; Settings GUI Class - UI Layer Only
+; ==============================================
+; Handles ONLY GUI creation, layout, and event routing
+; Business logic delegated to SettingsPresenter
+; Validation logic delegated to SettingsValidator
+
+class SettingsGui {
+    static gui := ""
+    static lastTestedKey := ""
+    static lastTestResult := false
+    static comprehensiveRadio := ""
+    static proofreadingRadio := ""
+
+    ; GUI control references
+    static providerDropdown := ""
+    static apiKeyEdit := ""
+    static testBtn := ""
+    static apiStatusText := ""
+    static apiUrlEdit := ""
+    static apiUrlLabel := ""
+    static apiKeyLabel := ""
+    static modelLabel := ""
+    static modelDropdown := ""
+    static modelNoteText := ""
+    static promptsModeText := ""
+    static promptsModeLabel := ""
+    static promptsSystemPromptEdit := ""
+    static updateStatusText := ""
+    static updateAvailableText := ""
+    static primaryUpdateBtn := ""
+    static cancelUpdateBtn := ""
+    static updateState := "check"
+    static newestUpdateVersion := ""
+    static newestUpdateSHA256 := ""
+    static betaModeOverrideCheckbox := ""
+    static betaPowerScribeCheckbox := ""
+    static isUpdating := false  ; Flag to prevent opening Settings from tray during updates
+    static originalWindowTitle := "Report Check Settings"
+
+    ; Public API - Main entry point
+    static Show() {
+        ; Block opening settings during update process
+        if (this.isUpdating) {
+            MsgBox("Cannot open settings while an update is in progress.`n`nPlease wait for the update to complete.", "Update In Progress", 48)
+            return
+        }
+
+        ; Create the settings GUI window
+        this.gui := Gui("+Resize MinSize650x800", this.originalWindowTitle)
+        this.gui.SetFont("s10", "Segoe UI")
+        this.gui.OnEvent("Close", (*) => this.gui.Hide())
+
+        ; Set custom icon if available
+        try {
+            iconPath := A_ScriptDir . "\RadReview.ico"
+            if FileExist(iconPath) {
+                this.gui.Opt("+Icon" . iconPath)
+            }
+        } catch {
+            ; Continue without icon if it fails
+        }
+
+        ; Add Tab Control
+        tabs := this.gui.Add("Tab3", "x10 y10 w630 h710", ["Mode", "Prompts", "API", "Beta", "About"])
+
+        ; Create each tab
+        this._CreateModeTab(tabs)
+        this._CreatePromptsTab(tabs)
+        this._CreateAPITab(tabs)
+        this._CreateBetaTab(tabs)
+        this._CreateAboutTab(tabs)
+
+        ; Reset tab usage to allow buttons outside tabs
+        tabs.UseTab()
+
+        ; Update mode warning visibility based on current provider
+        this._UpdateModeWarning()
+
+        ; Add Save and Cancel buttons
+        btnSave := this.gui.Add("Button", "x470 y735 w80 h30", "Save")
+        btnCancel := this.gui.Add("Button", "x560 y735 w80 h30", "Cancel")
+
+        btnSave.OnEvent("Click", (*) => this._OnSaveClick())
+        btnCancel.OnEvent("Click", (*) => this.gui.Hide())
+
+        ; Show the GUI
+        this.gui.Show("w650 h650")
+    }
+
+    ; Public API - Refresh mode display (called from external code)
+    static RefreshModeDisplay() {
+        try {
+            ; Check if GUI exists and is visible
+            if (!this.gui || !this.gui.Hwnd || !WinExist("ahk_id " this.gui.Hwnd)) {
+                return
+            }
+
+            ; Get current mode from config
+            currentMode := ConfigManager.config["Settings"].Get("prompt_type", "comprehensive")
+
+            ; Update radio buttons to match
+            if (this.HasOwnProp("comprehensiveRadio") && this.comprehensiveRadio) {
+                if (currentMode = "comprehensive") {
+                    this.comprehensiveRadio.Value := 1
+                } else {
+                    this.proofreadingRadio.Value := 1
+                }
+            }
+
+            ; Update prompts tab display, model dropdown, and mode warning
+            this._UpdatePromptsTabDisplay()
+            this._UpdateModelForMode()
+            this._UpdateModeWarning()
+
+        } catch as err {
+            ; Silently fail if GUI isn't ready
+        }
+    }
+
+    ; ==========================================
+    ; TAB CREATION - Mode Tab
+    ; ==========================================
+    static _CreateModeTab(tabs) {
+        tabs.UseTab(1)
+
+        ; Title and description
+        this.gui.Add("Text", "x20 y50 w610 h50",
+            "Select the review mode for your reports. This determines the type of analysis the AI will perform.")
+
+        ; Mode selection
+        this.gui.Add("GroupBox", "x20 y115 w610 h320", "Review Mode")
+
+        ; Get current mode
+        currentMode := ConfigManager.config["Settings"].Get("prompt_type", "comprehensive")
+
+        ; Create radio buttons
+        this.comprehensiveRadio := this.gui.Add("Radio", "x40 y145 w570 h30 vModeComprehensive Group",
+            "Comprehensive Review (Slower, more detailed)")
+        this.proofreadingRadio := this.gui.Add("Radio", "x40 y260 w570 h30 vModeProofreading",
+            "Proofreading Only (Faster, less analytic)")
+
+        ; Set checked state
+        if (currentMode = "comprehensive") {
+            this.comprehensiveRadio.Value := 1
+        } else {
+            this.proofreadingRadio.Value := 1
+        }
+
+        ; Add event handlers
+        this.comprehensiveRadio.OnEvent("Click", (*) => this._OnModeChange())
+        this.proofreadingRadio.OnEvent("Click", (*) => this._OnModeChange())
+
+        ; Descriptive text
+        this.gui.Add("Text", "x60 y175 w550 h75 c888888",
+            "Full analysis including clinical effectiveness, diagnostic reasoning, clarity, structure, technical accuracy, and proofreading. Best for complex report review before signing. If demographic and targeted review suggestions are enabled in beta settings this will trigger an additional API call.")
+
+        this.gui.Add("Text", "x60 y290 w550 h75 c888888",
+            "Fast check for broad content, spelling, grammar, punctuation, transcription, and mathematical mistakes only. Does not critique clinical content or style. Best for catching errors before final review.")
+
+        ; Helper text for Gemini comprehensive mode (below group box, initially hidden)
+        this.modeGeminiWarning := this.gui.Add("Text", "x20 y445 w610 h30 c888888 Hidden",
+            "Note: Comprehensive mode defaults to paid 2.5 Pro. You can change to free 2.5 Flash in API tab.")
+    }
+
+    ; ==========================================
+    ; TAB CREATION - Prompts Tab
+    ; ==========================================
+    static _CreatePromptsTab(tabs) {
+        tabs.UseTab(2)
+
+        ; Current mode display
+        currentMode := ConfigManager.config["Settings"].Get("prompt_type", "comprehensive")
+        promptData := SettingsPresenter.GetPromptData(currentMode)
+
+        this.promptsModeText := this.gui.Add("Text", "x20 y50 w610 h25",
+            "Current Mode: " . promptData.modeDisplay . " (change in Mode tab)")
+
+        this.gui.Add("Text", "x20 y85 w610",
+            "System prompt with dynamically injected date information (read-only):")
+
+        ; System prompt section - expanded to use full space
+        this.gui.Add("GroupBox", "x20 y115 w610 h525", "System Prompt (AI Instructions)")
+        this.promptsModeLabel := this.gui.Add("Text", "x30 y135 w590",
+            "AI instructions for " . promptData.modeDisplay . " mode:")
+
+        systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "`r`n")
+        this.promptsSystemPromptEdit := this.gui.Add("Edit", "x30 y155 w590 h455 VScroll ReadOnly -E0x200 vSystemPrompt",
+            systemPromptForGUI)
+
+        ; Reload buttons
+        btnReloadFile := this.gui.Add("Button", "x30 y650 w150 h30", "Reload from File")
+        btnReloadFile.OnEvent("Click", (*) => this._OnReloadFromFileClick())
+
+        btnRestoreServer := this.gui.Add("Button", "x190 y650 w150 h30", "Restore from Server")
+        btnRestoreServer.OnEvent("Click", (*) => this._OnRestoreFromServerClick())
+
+        ; Help text
+        this.gui.Add("Text", "x30 y685 w450 h20 c888888",
+            "Reload = apply local edits | Restore = download latest defaults")
+    }
+
+    ; ==========================================
+    ; TAB CREATION - API Tab
+    ; ==========================================
+    static _CreateAPITab(tabs) {
+        tabs.UseTab(3)
+
+        this.gui.Add("Text", "x20 y50 w610", "Configure API settings:")
+
+        ; Create UI controls
+        this._CreateProviderControls()
+        this._CreateAPIKeyControls()
+        this._CreateAPIUrlControls()
+        this._CreateModelControls()
+        this._CreateAPIHelpText()
+
+        ; Initialize with current provider settings
+        this._UpdateProviderFields()
+
+        ; Check initial API key status
+        this._CheckInitialAPIKeyStatus()
+    }
+
+    static _CreateProviderControls() {
+        api := ConfigManager.config["API"]
+
+        this.gui.Add("Text", "x20 y80", "AI Provider:")
+        currentProvider := api.Get("provider", "claude")
+        this.providerDropdown := this.gui.Add("DropDownList", "x20 y100 w250 vProvider",
+            ["Claude (Anthropic)", "Gemini (Google)", "OpenAI"])
+
+        this.providerDropdown.Choose(currentProvider = "gemini" ? 2 : (currentProvider = "openai" ? 3 : 1))
+        this.providerDropdown.OnEvent("Change", (*) => this._OnProviderChange())
+    }
+
+    static _CreateAPIKeyControls() {
+        this.apiKeyLabel := this.gui.Add("Text", "x20 y145", "API Key:")
+        this.apiKeyEdit := this.gui.Add("Edit", "x20 y165 w480 h25 Password vAPIKey", "")
+
+        this.testBtn := this.gui.Add("Button", "x510 y165 w120 h25 vTestConnection", "Test Key")
+        this.testBtn.OnEvent("Click", (*) => this._OnTestKeyClick())
+
+        this.apiStatusText := this.gui.Add("Text", "x20 y200 w610 h25 vAPIStatus", "")
+        this.apiStatusText.SetFont("s9")
+
+        this.apiKeyEdit.OnEvent("Change", (*) => this._OnAPIKeyChange())
+    }
+
+    static _CreateAPIUrlControls() {
+        this.apiUrlLabel := this.gui.Add("Text", "x20 y235", "API URL:")
+        this.apiUrlEdit := this.gui.Add("Edit", "x20 y255 w610 h25 vAPIURL", "")
+    }
+
+    static _CreateModelControls() {
+        this.modelLabel := this.gui.Add("Text", "x20 y295", "Model:")
+        this.modelDropdown := this.gui.Add("DropDownList", "x20 y315 w400 vModel", [])
+
+        this.gui.Add("CheckBox", "x20 y355 w400 vAutoVerify", "Auto-verify API key when changed")
+    }
+
+    static _CreateAPIHelpText() {
+        this.modelNoteText := this.gui.Add("Text", "x20 y395 w610 h60 c888888", "")
+    }
+
+    ; ==========================================
+    ; TAB CREATION - Beta Tab
+    ; ==========================================
+    static _CreateBetaTab(tabs) {
+        tabs.UseTab(4)
+
+        beta := ConfigManager.config["Beta"]
+        settings := ConfigManager.config["Settings"]
+
+        this.gui.Add("Text", "x20 y50 w610 h25",
+            "⚠️ You must not use these features to send personally identifiable information")
+
+        ; Mode Override Hotkeys
+        this.gui.Add("GroupBox", "x20 y90 w610 h90", "Mode Override Hotkeys")
+        this.betaModeOverrideCheckbox := this.gui.Add("CheckBox", "x35 y115 w550 vBetaModeOverrideHotkeys",
+            "Enable mode override hotkeys")
+        this.betaModeOverrideCheckbox.Value := beta.Get("mode_override_hotkeys", false)
+        this.gui.Add("Text", "x35 y140 w570", "Ctrl+F9 = Proofreading; Ctrl+F10 = Comprehensive")
+
+        ; PowerScribe Auto-Select
+        this.gui.Add("GroupBox", "x20 y195 w610 h90", "PowerScribe Text Selection Automation")
+        this.betaPowerScribeCheckbox := this.gui.Add("CheckBox", "x35 y220 w550 vBetaPowerScribeAutoselect",
+            "Enable PowerScribe auto-select")
+        this.betaPowerScribeCheckbox.Value := beta.Get("powerscribe_autoselect", false)
+        this.gui.Add("Text", "x35 y245 w570 h30",
+            "Automatically selects all text in PowerScribe when using review hotkeys.")
+
+        ; Demographic Extraction
+        this.gui.Add("GroupBox", "x20 y300 w610 h155", "Demographic Information")
+        this.demographicExtractionCheckbox := this.gui.Add("CheckBox", "x35 y325 w550 vDemographicExtractionEnabled",
+            "Enable DICOM demographic information (experimental)")
+        this.demographicExtractionCheckbox.Value := beta.Get("demographic_extraction_enabled", false)
+        this.gui.Add("Text", "x35 y350 w570 h40",
+            "Extracts age, sex, modality, and study description. Required for targeted review. Note PHI is never sent to the LLM API.")
+
+        ; DICOM Cache Directory (child of demographic extraction)
+        this.dicomCacheDirLabel := this.gui.Add("Text", "x35 y395 w570", "DICOM cache directory:")
+        this.dicomCacheDirEdit := this.gui.Add("Edit", "x35 y415 w490 h25 vDicomCacheDirectory",
+            beta.Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT))
+        this.dicomCacheBrowseBtn := this.gui.Add("Button", "x535 y415 w85 h25", "Browse...")
+        this.dicomCacheBrowseBtn.OnEvent("Click", (*) => this._OnBrowseDicomCacheClick())
+
+        ; Targeted Review Panel (child feature)
+        this.gui.Add("GroupBox", "x20 y470 w610 h110", "Targeted Review Panel")
+        this.targetedReviewCheckbox := this.gui.Add("CheckBox", "x35 y495 w550 vTargetedReviewEnabled",
+            "Enable targeted review areas (Comprehensive mode only)")
+        this.targetedReviewCheckbox.Value := settings.Get("targeted_review_enabled", false)
+        this.gui.Add("Text", "x35 y520 w570 h50",
+            "Generates up to 5 anatomical focus areas (CT/MR/PET studies only). Requires demographic information to be enabled.")
+
+        ; Set up dependencies
+        isDemographicEnabled := beta.Get("demographic_extraction_enabled", false)
+        this.targetedReviewCheckbox.Enabled := isDemographicEnabled
+        this.dicomCacheDirLabel.Enabled := isDemographicEnabled
+        this.dicomCacheDirEdit.Enabled := isDemographicEnabled
+        this.dicomCacheBrowseBtn.Enabled := isDemographicEnabled
+        this.demographicExtractionCheckbox.OnEvent("Click", (*) => this._OnDemographicExtractionToggle())
+
+        ; Info note
+        this.gui.Add("Text", "x20 y595 w610 h40 c888888",
+            "Note: Changes to beta features require the application to restart. " .
+            "The script will reload automatically when you save settings.")
+    }
+
+    ; ==========================================
+    ; TAB CREATION - About Tab
+    ; ==========================================
+    static _CreateAboutTab(tabs) {
+        tabs.UseTab(5)
+
+        ; Application Information
+        this.gui.Add("GroupBox", "x20 y50 w610 h270", "Application Information")
+        this.gui.Add("Text", "x30 y80 w590", "Report Check v" VERSION)
+        this.gui.Add("Text", "x30 y100 w590",
+            "Experimental report review tool using AI. Use at your own risk. ")
+        this.gui.Add("Text", "x30 y130 w590 h25",
+            "To use: Select report text then press Ctrl + F11 to review.")
+
+        ; Add readme link
+        readmeLink := this.gui.Add("Link", "x30 y155", 'View Documentation: <a href="">README.md</a>')
+        readmeLink.OnEvent("Click", (*) => this._OpenReadme())
+
+        ; API Key Sources
+        this.gui.Add("Text", "x30 y180 w590", "Get API keys:")
+        this.gui.Add("Text", "x30 y200 w150", "Claude (paid only):")
+        this.gui.Add("Link", "x180 y200 w440", '<a href="https://console.anthropic.com/">https://console.anthropic.com/</a>')
+        this.gui.Add("Text", "x30 y220 w150", "Gemini (free option):")
+        this.gui.Add("Link", "x180 y220 w440", '<a href="https://aistudio.google.com/app/apikey">https://aistudio.google.com/app/apikey</a>')
+        this.gui.Add("Text", "x30 y240 w150", "OpenAI (paid only):")
+        this.gui.Add("Link", "x180 y240 w440", '<a href="https://platform.openai.com/api-keys">https://platform.openai.com/api-keys</a>')
+
+        ; Startup Options
+        this.gui.Add("GroupBox", "x20 y330 w610 h75", "Startup Options")
+        startupCheckbox := this.gui.Add("CheckBox", "x30 y355 w570 h40 vStartupEnabled",
+            "Launch Report Check when Windows starts")
+        startupCheckbox.Value := ConfigManager.IsStartupEnabled()
+
+        ; Troubleshooting Section
+        this.gui.Add("GroupBox", "x20 y415 w610 h145", "Troubleshooting")
+
+        btnDiagnoseFix := this.gui.Add("Button", "x30 y445 w200 h30", "Diagnose && Fix Stuck Keys")
+        btnDiagnoseFix.OnEvent("Click", (*) => DiagnoseAndFixKeys())
+
+        this.gui.Add("Text", "x30 y480 w570 h40 c888888",
+            "Use this tool if modifier keys (Ctrl, Alt, Shift, Win) become stuck or unresponsive.")
+
+        debugCheckbox := this.gui.Add("CheckBox", "x30 y525 w570 vDebugLogging",
+            "Enable debug level logging (for troubleshooting)")
+        debugCheckbox.Value := ConfigManager.config["Settings"].Get("debug_logging", false)
+
+        ; Updates Section (only available in script mode - compiled EXEs can't self-update)
+        if (!A_IsCompiled) {
+            this.gui.Add("GroupBox", "x20 y570 w610 h130", "Updates")
+
+            this.updateStatusText := this.gui.Add("Text", "x30 y600 w570 h25", "Current version: " VERSION)
+            this.updateStatusText.SetFont("s10")
+
+            this.updateAvailableText := this.gui.Add("Text", "x30 y630 w570 h20 Hidden", "")
+            this.updateAvailableText.SetFont("s9")
+
+            this.primaryUpdateBtn := this.gui.Add("Button", "x30 y660 w140 h35", "Check for Updates")
+            this.primaryUpdateBtn.OnEvent("Click", (*) => this._OnPrimaryUpdateClick())
+            this.primaryUpdateBtn.SetFont("s10")
+
+            this.cancelUpdateBtn := this.gui.Add("Button", "x180 y660 w80 h35 Hidden", "Cancel")
+            this.cancelUpdateBtn.OnEvent("Click", (*) => this._ResetUpdateUI())
+            this.cancelUpdateBtn.SetFont("s10")
+
+            this.updateState := "check"
+            this.newestUpdateFile := ""
+        } else {
+            ; Show message for compiled version
+            this.gui.Add("GroupBox", "x20 y570 w610 h130", "Updates")
+            this.gui.Add("Text", "x30 y600 w570 h75",
+                "Current version: " VERSION "`n`n" .
+                "Auto-update is not available in compiled versions.`n" .
+                "To update, download the latest version from the distribution source.")
+        }
+    }
+
+    ; ==========================================
+    ; EVENT HANDLERS - Mode Tab
+    ; ==========================================
+    static _OnModeChange() {
+        try {
+            values := this.gui.Submit(0)
+            selectedMode := (values.ModeComprehensive = 1) ? "comprehensive" : "proofreading"
+
+            ; Delegate to presenter
+            SettingsPresenter.ChangeMode(selectedMode)
+
+            ; Update tray menu
+            UpdateModeMenu()
+
+            ; Update UI
+            this._UpdatePromptsTabDisplay()
+            this._UpdateModelForMode()
+        } catch {
+            ; Ignore errors
+        }
+    }
+
+    ; ==========================================
+    ; EVENT HANDLERS - Prompts Tab
+    ; ==========================================
+    static _OnReloadFromFileClick() {
+        try {
+            ; Reload prompts from disk into the cache
+            reloadResult := PromptCache.Reload(ConfigManager.configDir)
+
+            if (!reloadResult.success) {
+                errorMsg := "Warning: Some prompts could not be reloaded:`n`n"
+                for index, err in reloadResult.errors {
+                    errorMsg .= "• " . err . "`n"
+                }
+                MsgBox(errorMsg, "Prompt Reload Warning", 48)
+            }
+
+            ; Get the freshly reloaded prompt data
+            promptData := SettingsPresenter.GetPromptData(ConfigManager.config["Settings"]["prompt_type"])
+            systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "`r`n")
+
+            try {
+                systemPromptEdit := this.gui["SystemPrompt"]
+                systemPromptEdit.Text := systemPromptForGUI
+                NotifySuccess("Prompts Reloaded", "System prompt has been refreshed from file")
+            } catch {
+                MsgBox("System prompt has been reloaded from file.", "Prompts Reloaded", 64)
+            }
+        } catch as err {
+            MsgBox("Error reloading prompts: " err.Message, "Error", 16)
+        }
+    }
+
+    static _OnRestoreFromServerClick() {
+        try {
+            ; Confirmation dialog
+            result := MsgBox(
+                "Restore prompt files from server?`n`n" .
+                "This will:`n" .
+                "• Download the latest default prompts from the server`n" .
+                "• OVERWRITE your local customizations`n" .
+                "• Backup your current prompts to pref\backup\`n`n" .
+                "Continue?",
+                "Confirm Restore from Server",
+                4 + 48)  ; Yes/No + Warning icon
+
+            if (result != "Yes") {
+                Logger.Info("User cancelled prompt restore from server")
+                return
+            }
+
+            Logger.Info("User initiated prompt restore from server")
+
+            ; Show progress notification
+            NotifyInfo("Restoring Prompts", "Downloading latest prompts from server...")
+
+            ; Get the latest published version from the server API
+            ; We need to call the API directly to get the latest_version field from the response
+            try {
+                url := VersionManager.API_URL . "/api/versions/" . VersionManager.APP_NAME
+                http := ComObject("WinHttp.WinHttpRequest.5.1")
+                http.Open("GET", url, false)
+                http.SetRequestHeader("X-API-Key", VersionManager.API_KEY)
+                timeouts := Constants.GetUpdateTimeouts()
+                http.SetTimeouts(timeouts[1], timeouts[2], timeouts[3], timeouts[4])
+                http.Send()
+
+                if (http.Status != 200) {
+                    MsgBox("Failed to connect to update server: API returned status " . http.Status, "Connection Error", 16)
+                    http := ""
+                    return
+                }
+
+                ; Parse JSON to extract latest_version
+                response := VersionManager._ParseJSON(http.ResponseText)
+                http := ""
+
+                if (!response.Has("latest_version")) {
+                    MsgBox("Invalid server response: no version information available", "Server Error", 16)
+                    return
+                }
+
+                serverVersion := response["latest_version"]
+            } catch as err {
+                MsgBox("Error connecting to server: " . err.Message, "Connection Error", 16)
+                return
+            }
+
+            ; Restore prompt files from server using latest published version
+            restoreResult := VersionManager.RestorePromptFiles(serverVersion)
+
+            if (!restoreResult.success) {
+                errorMsg := "Failed to restore prompts from server:`n`n" . restoreResult.error
+                if (restoreResult.backupDir != "") {
+                    errorMsg .= "`n`nYour original files were backed up to:`n" . restoreResult.backupDir
+                }
+                MsgBox(errorMsg, "Restore Failed", 16)
+                return
+            }
+
+            ; Reload the cache with the new prompts
+            reloadResult := PromptCache.Reload(ConfigManager.configDir)
+
+            if (!reloadResult.success) {
+                MsgBox("Prompts restored but failed to reload cache. Please restart the application.", "Warning", 48)
+                return
+            }
+
+            ; Update the GUI display
+            promptData := SettingsPresenter.GetPromptData(ConfigManager.config["Settings"]["prompt_type"])
+            systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "`r`n")
+
+            try {
+                systemPromptEdit := this.gui["SystemPrompt"]
+                systemPromptEdit.Text := systemPromptForGUI
+
+                ; Success notification
+                successMsg := restoreResult.filesRestored . " prompt file(s) restored from server"
+                if (restoreResult.backedUpCount > 0) {
+                    successMsg .= "`nBackup saved to: pref\backup\"
+                }
+                NotifySuccess("Prompts Restored", successMsg)
+            } catch {
+                MsgBox("Prompts have been restored from server.`n`nBackup location: " . restoreResult.backupDir, "Prompts Restored", 64)
+            }
+
+        } catch as err {
+            MsgBox("Error restoring prompts from server: " . err.Message, "Error", 16)
+        }
+    }
+
+    ; ==========================================
+    ; EVENT HANDLERS - API Tab
+    ; ==========================================
+    static _OnProviderChange() {
+        providerIndex := this.providerDropdown.Value
+        provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+
+        ; Delegate to presenter
+        SettingsPresenter.ChangeProvider(provider)
+
+        ; Update UI
+        this._UpdateProviderFields()
+        this._CheckInitialAPIKeyStatus()
+        this._UpdateModeWarning()
+    }
+
+    static _OnAPIKeyChange() {
+        try {
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+
+            ; Get auto-verify setting
+            autoVerify := false
+            try {
+                values := this.gui.Submit(0)
+                autoVerify := values.AutoVerify
+            }
+
+            apiKey := this.apiKeyEdit.Text
+
+            ; Get current stored key
+            currentStoredKey := ConfigManager.GetProviderAPIKey(provider)
+
+            ; Delegate to presenter
+            changeResult := SettingsPresenter.OnAPIKeyChanged(apiKey, provider, this.lastTestedKey, currentStoredKey)
+
+            ; Clear session test result if needed
+            if (changeResult.shouldClearSession) {
+                this.lastTestedKey := ""
+                this.lastTestResult := false
+            }
+
+            ; Clear persistent verification if needed
+            if (changeResult.shouldClearPersistent) {
+                hashField := provider . "_verified_hash"
+                dateField := provider . "_verified_date"
+                ConfigManager.config["API"][hashField] := ""
+                ConfigManager.config["API"][dateField] := ""
+            }
+
+            ; Update status display
+            if (apiKey = "" || Trim(apiKey) = "") {
+                this.apiStatusText.Text := "ℹ️ No API key entered"
+                this.apiStatusText.SetFont("c0x808080")
+                return
+            }
+
+            ; Check format
+            if (!SettingsValidator.ValidateAPIKeyFormat(apiKey, provider)) {
+                errorMsg := SettingsValidator.GetAPIKeyFormatError(provider)
+                this.apiStatusText.Text := "⚠️ " . errorMsg
+                this.apiStatusText.SetFont("c0xFF6B6B")
+                return
+            }
+
+            ; Auto-verify if enabled
+            if (autoVerify) {
+                if (this.HasOwnProp("verifyTimer")) {
+                    this.verifyTimer.Delete()
+                }
+                this.verifyTimer := SetTimer(() => this._AutoVerifyAPIKey(), -1500)
+            } else {
+                this.apiStatusText.Text := "🔄 Click 'Test Key' to verify"
+                this.apiStatusText.SetFont("c0x808080")
+            }
+        }
+    }
+
+    static _OnTestKeyClick() {
+        try {
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+
+            values := this.gui.Submit(0)
+            apiKey := Trim(values.APIKey)
+
+            ; Update UI
+            this.apiStatusText.Text := "🔄 Testing connection..."
+            this.apiStatusText.SetFont("c0x4ECDC4")
+            this.testBtn.Enabled := false
+            this.testBtn.Text := "Testing..."
+
+            ; Validate
+            if (apiKey = "") {
+                this.apiStatusText.Text := "⚠️ Please enter an API key"
+                this.apiStatusText.SetFont("c0xFF6B6B")
+                this._ResetTestButton()
+                return
+            }
+
+            ; Delegate to presenter
+            result := SettingsPresenter.TestAPIKey(apiKey, provider)
+
+            ; Update UI based on result
+            this.apiStatusText.Text := result.message
+            this.apiStatusText.SetFont(result.success ? "c0x45B7D1" : "c0xFF6B6B")
+
+            ; Store result
+            this.lastTestedKey := apiKey
+            this.lastTestResult := result.success
+
+        } catch as err {
+            this.apiStatusText.Text := "❌ Error: " . err.Message
+            this.apiStatusText.SetFont("c0xFF6B6B")
+        } finally {
+            this._ResetTestButton()
+        }
+    }
+
+    static _AutoVerifyAPIKey() {
+        try {
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+            apiKey := this.apiKeyEdit.Text
+
+            if (apiKey = "") {
+                return
+            }
+
+            this.apiStatusText.Text := "🔄 Auto-verifying..."
+            this.apiStatusText.SetFont("c0x4ECDC4")
+            this.testBtn.Enabled := false
+
+            ; Delegate to presenter
+            result := SettingsPresenter.AutoVerifyAPIKey(apiKey, provider)
+
+            ; Update UI
+            this.apiStatusText.Text := result.message
+            this.apiStatusText.SetFont(result.success ? "c0x45B7D1" : "c0xFF6B6B")
+
+            ; Store result
+            this.lastTestedKey := apiKey
+            this.lastTestResult := result.success
+
+            this.testBtn.Enabled := true
+
+        } catch as err {
+            this.apiStatusText.Text := "❌ Auto-verification error"
+            this.apiStatusText.SetFont("c0xFF6B6B")
+            this.testBtn.Enabled := true
+        }
+    }
+
+    static _OnSaveClick() {
+        try {
+            values := this.gui.Submit(0)
+
+            ; Get provider and mode
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+            selectedMode := (values.ModeComprehensive = 1) ? "comprehensive" : "proofreading"
+
+            ; Delegate to presenter
+            result := SettingsPresenter.SaveSettings(values, provider, selectedMode)
+
+            if (result.success) {
+                NotifySuccess("Settings Saved", "Reloading Report Check...")
+                this.gui.Hide()
+                SetTimer(() => (TrayTip(), Reload()), -Constants.RELOAD_DELAY)
+            } else {
+                if (result.error != "Validation failed") {
+                    MsgBox("Error saving settings: " . result.error, "Error", 16)
+                }
+            }
+
+        } catch as err {
+            MsgBox("Error saving settings: " err.Message, "Error", 16)
+        }
+    }
+
+    ; ==========================================
+    ; EVENT HANDLERS - About Tab (Updates)
+    ; ==========================================
+    static _OnPrimaryUpdateClick() {
+        ; Safety check: updates don't work in compiled mode
+        if (A_IsCompiled) {
+            MsgBox("Auto-update is not available in compiled versions.`n`n" .
+                   "Compiled EXEs cannot update themselves. To update, download`n" .
+                   "the latest version from the distribution source.",
+                   "Feature Not Available", 64)
+            return
+        }
+
+        if (this.updateState = "check") {
+            this._CheckForUpdates()
+        } else if (this.updateState = "install") {
+            this._InstallUpdate()
+        }
+    }
+
+    static _ResetUpdateUI() {
+        ; Safety check: only reset if not compiled (UI elements don't exist in compiled mode)
+        if (A_IsCompiled) {
+            return
+        }
+
+        this.updateState := "check"
+        this.primaryUpdateBtn.Text := "Check for Updates"
+        this.primaryUpdateBtn.Enabled := true
+        this.cancelUpdateBtn.Visible := false
+        this.updateAvailableText.Visible := false
+        this.updateStatusText.Text := "Current version: " VERSION
+        this.updateStatusText.SetFont("s10")
+        this.newestUpdateFile := ""
+    }
+
+    static _CheckForUpdates() {
+        ; Safety check: updates don't work in compiled mode
+        if (A_IsCompiled) {
+            return
+        }
+
+        try {
+            this.updateStatusText.Text := "Checking for updates..."
+            this.updateStatusText.SetFont("s10")
+
+            result := VersionManager.CheckForUpdatesFromAPI(VERSION)
+
+            if (!result.success) {
+                this.updateStatusText.Text := "Error: " . result.error
+                this.updateStatusText.SetFont("s10")
+                MsgBox("Could not check for updates: " . result.error, "Update Error", 16)
+                return
+            }
+
+            if (!result.updateAvailable) {
+                this.updateStatusText.Text := "Current version: " VERSION " (latest)"
+                this.updateStatusText.SetFont("s10")
+                NotifyInfo("Update Check", "You are running the latest version.")
+            } else {
+                this.updateStatusText.Text := "Current: " VERSION " → Available: " . result.version
+                this.updateStatusText.SetFont("s10")
+
+                this.updateAvailableText.Text := "Release: " . result.releaseDate . " - " . result.releaseNotes
+                this.updateAvailableText.Visible := true
+
+                this.updateState := "install"
+                this.primaryUpdateBtn.Text := "Install Update"
+                this.cancelUpdateBtn.Visible := true
+
+                this.newestUpdateVersion := result.version
+                this.newestUpdateSHA256 := result.sha256
+
+                NotifyInfo("Update Available", "Version " . result.version . " found!")
+            }
+
+        } catch as err {
+            this.updateStatusText.Text := "Error checking for updates"
+            this.updateStatusText.SetFont("s10")
+            MsgBox("Could not check for updates: " . err.Message, "Update Error", 16)
+        }
+    }
+
+    static _InstallUpdate() {
+        ; Safety check: updates don't work in compiled mode
+        if (A_IsCompiled) {
+            return
+        }
+
+        if (!this.HasOwnProp("newestUpdateVersion") || this.newestUpdateVersion = "") {
+            MsgBox("No update version selected", "Update Error", 16)
+            return
+        }
+
+        result := MsgBox(
+            "Install Complete Update v" . this.newestUpdateVersion . "?`n`n" .
+            "• ALL files will be downloaded (main script + libraries + prompts)`n" .
+            "• Each file will be verified (SHA-256)`n" .
+            "• Current version will be backed up`n" .
+            "• Application will restart automatically`n" .
+            "• This may take a few seconds`n`n" .
+            "Continue?",
+            "Confirm Update Installation",
+            4 + 32)
+
+        if (result != "Yes") {
+            return
+        }
+
+        ; Set update flag to prevent UI interaction during update
+        this.isUpdating := true
+
+        try {
+            this.updateState := "installing"
+            this.updateStatusText.Text := "Preparing update..."
+            this.updateStatusText.SetFont("s10")
+            this.primaryUpdateBtn.Text := "Preparing..."
+            this.primaryUpdateBtn.Enabled := false
+            this.cancelUpdateBtn.Enabled := false
+
+            ; Disable settings window during update (user can see progress but not interact)
+            this.gui.Opt("+Disabled")
+            this.gui.Title := this.originalWindowTitle . " [UPDATE IN PROGRESS]"
+
+            targetDir := A_ScriptDir
+
+            updateResult := VersionManager.PerformCompleteUpdate(
+                this.newestUpdateVersion,
+                targetDir,
+                ObjBindMethod(this, "_UpdateProgress")
+            )
+
+            if (!updateResult.success) {
+                MsgBox("Update failed: " . updateResult.error, "Update Error", 16)
+                ; Reset update flag to allow retrying
+                this.isUpdating := false
+                this.updateState := "install"
+                this.primaryUpdateBtn.Text := "Install Update"
+                this.primaryUpdateBtn.Enabled := true
+                this.cancelUpdateBtn.Enabled := true
+                ; Re-enable GUI since update failed
+                this.gui.Opt("-Disabled")
+                this.gui.Title := this.originalWindowTitle
+                return
+            }
+
+            NotifySuccess("Update Complete",
+                updateResult.filesInstalled . " files installed. Restarting in 3 seconds...",
+                3000)
+
+            ; GUI already disabled at start of update process (will exit on restart anyway)
+            SetTimer(() => this._RestartWithNewVersion(updateResult.targetFile), -3000)
+
+        } catch as err {
+            MsgBox("Error installing update: " . err.Message, "Update Error", 16)
+            ; Reset update flag to allow retrying
+            this.isUpdating := false
+            this.updateState := "install"
+            this.primaryUpdateBtn.Text := "Install Update"
+            this.primaryUpdateBtn.Enabled := true
+            this.cancelUpdateBtn.Enabled := true
+            ; Re-enable GUI since update failed
+            this.gui.Opt("-Disabled")
+            this.gui.Title := this.originalWindowTitle
+        }
+    }
+
+    static _UpdateProgress(fileIndex, totalFiles, filename, status) {
+        if (status = "downloading") {
+            this.updateStatusText.Text := "Downloading " . fileIndex . "/" . totalFiles . ": " . filename
+            this.primaryUpdateBtn.Text := "Downloading..."
+        } else if (status = "verifying") {
+            this.updateStatusText.Text := "Verifying " . fileIndex . "/" . totalFiles . ": " . filename
+            this.primaryUpdateBtn.Text := "Verifying..."
+        } else if (status = "backing_up") {
+            this.updateStatusText.Text := "Creating backups..."
+            this.primaryUpdateBtn.Text := "Backing up..."
+        } else if (status = "installing") {
+            this.updateStatusText.Text := "Installing files..."
+            this.primaryUpdateBtn.Text := "Installing..."
+        } else if (status = "complete") {
+            this.updateStatusText.Text := "Update complete! (" . totalFiles . " files installed)"
+            this.primaryUpdateBtn.Text := "Complete!"
+        }
+    }
+
+    static _RestartWithNewVersion(newScriptPath) {
+        try {
+            ; Clear the notification before exiting to prevent it getting stuck
+            TrayTip()
+            Sleep(100)  ; Brief pause to ensure notification clears
+
+            Run('"' newScriptPath '"')
+            Sleep(Constants.SETTINGS_SAVE_FEEDBACK_DELAY)
+            ExitApp()
+        } catch as err {
+            MsgBox("Error restarting application: " err.Message "`n`nPlease manually restart the application.", "Restart Error", 16)
+            ; Reset update flag if restart fails
+            this.isUpdating := false
+            ; Re-enable GUI since restart failed
+            this.gui.Opt("-Disabled")
+            this.gui.Title := this.originalWindowTitle
+            this.updateState := "install"
+            this.primaryUpdateBtn.Text := "Install Update"
+            this.primaryUpdateBtn.Enabled := true
+            this.cancelUpdateBtn.Enabled := true
+        }
+    }
+
+    ; ==========================================
+    ; UI UPDATE HELPERS
+    ; ==========================================
+    static _UpdateProviderFields() {
+        try {
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+
+            ; Get current mode
+            promptType := "comprehensive"
+            try {
+                values := this.gui.Submit(0)
+                promptType := (values.ModeComprehensive = 1) ? "comprehensive" : "proofreading"
+            } catch {
+                promptType := ConfigManager.config["Settings"].Get("prompt_type", "comprehensive")
+            }
+
+            ; Get provider data from presenter
+            providerData := SettingsPresenter.GetProviderData(provider, promptType)
+
+            ; Update UI
+            this.apiKeyEdit.Value := providerData.apiKey
+            this.apiUrlEdit.Value := providerData.apiUrl
+            this.modelDropdown.Delete()
+            this.modelDropdown.Add(providerData.models)
+            this.modelDropdown.Choose(providerData.modelIndex)
+            this.modelNoteText.Text := providerData.noteText
+
+            ; Clear test results
+            this.lastTestedKey := ""
+            this.lastTestResult := false
+            this.apiStatusText.Text := ""
+
+        } catch as err {
+            MsgBox("Error updating provider fields: " . err.Message, "Error", 16)
+        }
+    }
+
+    static _CheckInitialAPIKeyStatus() {
+        try {
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+            apiKey := this.apiKeyEdit.Text
+
+            ; Get status from presenter
+            statusData := SettingsPresenter.GetAPIKeyStatus(apiKey, provider, this.lastTestedKey, this.lastTestResult)
+
+            ; Update UI
+            this.apiStatusText.Text := statusData.status
+            this.apiStatusText.SetFont(statusData.color)
+        }
+    }
+
+    static _ResetTestButton() {
+        this.testBtn.Enabled := true
+        this.testBtn.Text := "Test Key"
+    }
+
+    static _UpdatePromptsTabDisplay() {
+        try {
+            values := this.gui.Submit(0)
+            selectedMode := (values.ModeComprehensive = 1) ? "comprehensive" : "proofreading"
+
+            promptData := SettingsPresenter.GetPromptData(selectedMode)
+
+            this.promptsModeText.Text := "Current Mode: " . promptData.modeDisplay . " (change in Mode tab)"
+            this.promptsModeLabel.Text := "AI instructions for " . promptData.modeDisplay . " mode:"
+
+            systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "`r`n")
+            this.promptsSystemPromptEdit.Text := systemPromptForGUI
+
+        } catch as err {
+            ; Silently fail if prompts tab isn't created yet
+        }
+    }
+
+    static _UpdateModelForMode() {
+        try {
+            if (!this.HasOwnProp("modelDropdown")) {
+                return
+            }
+
+            values := this.gui.Submit(0)
+            selectedMode := (values.ModeComprehensive = 1) ? "comprehensive" : "proofreading"
+
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : (providerIndex = 3) ? "openai" : "claude"
+
+            ; Get model from presenter
+            modelData := SettingsPresenter.GetModelForMode(provider, selectedMode)
+            this.modelDropdown.Choose(modelData.modelIndex)
+
+        } catch as err {
+            ; Silently fail - model dropdown may not be ready
+        }
+    }
+
+    static _UpdateModeWarning() {
+        try {
+            ; Check if controls exist
+            if (!this.HasOwnProp("modeGeminiWarning") || !this.modeGeminiWarning) {
+                return
+            }
+            if (!this.HasOwnProp("providerDropdown") || !this.providerDropdown) {
+                return
+            }
+
+            ; Get current provider
+            providerIndex := this.providerDropdown.Value
+            provider := (providerIndex = 2) ? "gemini" : "claude"
+
+            ; Show warning only for Gemini
+            if (provider = "gemini") {
+                this.modeGeminiWarning.Visible := true
+            } else {
+                this.modeGeminiWarning.Visible := false
+            }
+
+        } catch as err {
+            ; Silently fail if controls aren't ready
+        }
+    }
+
+    ; ==========================================
+    ; DEMOGRAPHIC EXTRACTION TOGGLE HANDLER
+    ; ==========================================
+    static _OnDemographicExtractionToggle() {
+        ; Enable/disable child controls based on demographic extraction state
+        isDemographicEnabled := this.demographicExtractionCheckbox.Value
+
+        ; Targeted review checkbox
+        this.targetedReviewCheckbox.Enabled := isDemographicEnabled
+        if (!isDemographicEnabled) {
+            this.targetedReviewCheckbox.Value := false
+        }
+
+        ; DICOM cache directory controls
+        this.dicomCacheDirLabel.Enabled := isDemographicEnabled
+        this.dicomCacheDirEdit.Enabled := isDemographicEnabled
+        this.dicomCacheBrowseBtn.Enabled := isDemographicEnabled
+    }
+
+    ; ==========================================
+    ; DICOM CACHE DIRECTORY BROWSER
+    ; ==========================================
+    static _OnBrowseDicomCacheClick() {
+        currentPath := this.dicomCacheDirEdit.Value
+        if (currentPath = "") {
+            currentPath := "C:\"
+        }
+
+        selectedDir := DirSelect("*" currentPath, 0, "Select DICOM Cache Directory")
+        if (selectedDir != "") {
+            this.dicomCacheDirEdit.Value := selectedDir
+        }
+    }
+
+    ; ==========================================
+    ; README HELPER
+    ; ==========================================
+    static _OpenReadme() {
+        readmePath := A_ScriptDir "\README.md"
+
+        ; Check if README.md exists
+        if (!FileExist(readmePath)) {
+            MsgBox("README.md file not found in the script directory.", "File Not Found", 16)
+            return
+        }
+
+        ; Try to open with default text editor
+        try {
+            Run(readmePath)
+        } catch {
+            ; Fallback: try notepad
+            try {
+                Run("notepad.exe " readmePath)
+            } catch as err {
+                MsgBox("Could not open README.md: " err.Message, "Error", 16)
+            }
+        }
+    }
+}

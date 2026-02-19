@@ -1,0 +1,8 @@
+# Folders to ignore
+pref/
+logs/
+.claude/
+
+# Common ignore patterns you might need later
+*.log
+*.exe

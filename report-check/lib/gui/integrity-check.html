@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="components.css">
+<script>
+(function() {
+    var m = location.search.match(/[?&]theme=(dark|light)/);
+    if (m) document.documentElement.dataset.theme = m[1];
+})();
+</script>
+<style>
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 32px;
+    overflow-y: auto;
+    background: var(--color-bg);
+}
+
+/* Shared state styling */
+.state { display: none; text-align: center; width: 100%; }
+.state.active { display: block; }
+
+.state-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 8px;
+}
+.state-message {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* Checking spinner */
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Failed files list */
+.failed-files {
+    text-align: left;
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: var(--color-bg-hint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    max-height: 160px;
+    overflow-y: auto;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+.failed-files .file-item {
+    padding: 2px 0;
+}
+.failed-files .file-name {
+    color: var(--color-text);
+    font-weight: 500;
+}
+.failed-files .file-reason {
+    color: var(--color-text-muted);
+    margin-left: 4px;
+}
+
+.state-hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 12px;
+    line-height: 1.5;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border-light);
+    background: var(--color-bg-card);
+    flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- Title Bar -->
+<div class="titlebar">
+    <span class="titlebar-text">Integrity Check</span>
+    <span class="titlebar-btn titlebar-btn-close" onclick="ahk.CloseWindow()">r</span>
+</div>
+
+<div class="main">
+    <!-- Checking state -->
+    <div class="state active" id="stateChecking">
+        <div class="spinner"></div>
+        <div class="state-title">Verifying Files...</div>
+        <div class="state-message">Checking all files against the official version.</div>
+    </div>
+
+    <!-- Not available (compiled) -->
+    <div class="state" id="stateNotAvailable">
+        <div class="state-title">Feature Not Available</div>
+        <div class="state-message">Integrity check is not available in the compiled version.
+
+This feature is only available when running as a script.</div>
+    </div>
+
+    <!-- Error -->
+    <div class="state" id="stateError">
+        <div class="state-title">Integrity Check Error</div>
+        <div class="state-message" id="errorMessage"></div>
+    </div>
+
+    <!-- Development version -->
+    <div class="state" id="stateDev">
+        <div class="state-title">Development Version</div>
+        <div class="state-message" id="devMessage"></div>
+    </div>
+
+    <!-- Passed -->
+    <div class="state" id="statePassed">
+        <div class="state-title">Integrity Check Passed</div>
+        <div class="state-message" id="passedMessage"></div>
+    </div>
+
+    <!-- Failed (files modified) -->
+    <div class="state" id="stateFailed">
+        <div class="state-title" id="failedTitle">Security Warning</div>
+        <div class="state-message" id="failedSummary"></div>
+        <div class="failed-files" id="failedFilesList"></div>
+        <div class="state-hint" id="failedHint"></div>
+    </div>
+</div>
+
+<div class="footer">
+    <button class="btn btn-primary" onclick="ahk.CloseWindow()">Close</button>
+</div>
+
+<script>
+function setTheme(mode) {
+    document.documentElement.dataset.theme = mode;
+}
+
+function showState(id) {
+    document.querySelectorAll('.state').forEach(function(el) {
+        el.classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+}
+
+function showNotAvailable() {
+    showState('stateNotAvailable');
+}
+
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    showState('stateError');
+}
+
+function showDev(message) {
+    document.getElementById('devMessage').textContent = message;
+    showState('stateDev');
+}
+
+function showPassed(count, version) {
+    var msg = '\u2713 ' + count + ' file(s) verified successfully.\n\n';
+    msg += 'All files match the official version ' + version + ' from the server.';
+    document.getElementById('passedMessage').textContent = msg;
+    showState('statePassed');
+}
+
+function showFailed(failedCount, version, failedFiles, hints) {
+    document.getElementById('failedTitle').textContent = 'Security Warning \u2014 Files Modified';
+    document.getElementById('failedSummary').textContent =
+        failedCount + ' file(s) do not match the official version ' + version + '.';
+
+    var listEl = document.getElementById('failedFilesList');
+    listEl.innerHTML = '';
+    failedFiles.forEach(function(f) {
+        var div = document.createElement('div');
+        div.className = 'file-item';
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'file-name';
+        nameSpan.textContent = '\u2022 ' + f.file;
+        var reasonSpan = document.createElement('span');
+        reasonSpan.className = 'file-reason';
+        reasonSpan.textContent = '\u2014 ' + f.reason;
+        div.appendChild(nameSpan);
+        div.appendChild(reasonSpan);
+        listEl.appendChild(div);
+    });
+
+    document.getElementById('failedHint').textContent = hints ||
+        'This could indicate files have been modified, you are running an unofficial version, or an incomplete update. It is recommended to update to the official version.';
+    showState('stateFailed');
+}
+</script>
+</body>
+</html>

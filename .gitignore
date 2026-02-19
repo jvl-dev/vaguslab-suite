@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Machine-specific configs (API keys, local paths)
+report-check/pref/config.json
+dicom-service/config.ini
+bruce-helper/config.ini
+
+# Runtime data and logs
+*/logs/
+*/data/
+*.log
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Editor / OS junk
+*.swp
+*.bak
+Thumbs.db
+Desktop.ini

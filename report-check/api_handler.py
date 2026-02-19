@@ -228,7 +228,7 @@ def _translate_gemini_error(e, model=""):
         if "gemini-2.5-pro" in model:
             return (
                 "Gemini Pro requires a paid API tier. Options: "
-                "(1) Switch to Claude in Settings, "
+                "(1) Switch provider in Settings, "
                 "(2) Upgrade your Gemini API plan, or "
                 "(3) Use Proofreading mode (uses Gemini Flash)"
             )
@@ -240,7 +240,7 @@ def _translate_gemini_error(e, model=""):
             retry_hint = f" Try again in ~{retry_secs} seconds."
         # Detect free tier quota
         if "free_tier" in err_lower:
-            return f"Gemini free tier rate limit reached.{retry_hint} To avoid this, upgrade your Gemini API plan or switch to Claude in Settings."
+            return f"Gemini free tier rate limit reached.{retry_hint} To avoid this, upgrade your Gemini API plan or switch provider in Settings."
         return f"Rate limit exceeded.{retry_hint} Please wait and try again."
     if "400" in err_lower:
         return "Bad request - check your Gemini API configuration."

@@ -730,13 +730,24 @@
 
         /* Stream error */
         .stream-error {
-            color: #ef5350;
-            background: rgba(239, 83, 80, 0.1);
-            border: 1px solid rgba(239, 83, 80, 0.3);
+            background: rgba(239, 83, 80, 0.06);
+            border: 1px solid rgba(239, 83, 80, 0.25);
             border-radius: var(--border-radius);
             padding: var(--spacing-sm) var(--spacing-md);
             margin-bottom: var(--spacing-md);
+        }
+
+        .stream-error .error-title {
             font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: #ef5350;
+            margin-bottom: 4px;
+        }
+
+        .stream-error .error-message {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
+            line-height: var(--line-height-base);
         }
 
         /* ===== Responsive Design ===== */
@@ -943,13 +954,24 @@
             setFollowUpEnabled(true);
         }
 
+        function classifyErrorTitle(msg) {
+            var m = msg.toLowerCase();
+            if (m.indexOf('rate limit') !== -1 || m.indexOf('quota') !== -1) return 'Rate Limit Reached';
+            if (m.indexOf('authentication') !== -1 || m.indexOf('api key') !== -1) return 'Authentication Error';
+            if (m.indexOf('connect') !== -1 || m.indexOf('timeout') !== -1 || m.indexOf('timed out') !== -1) return 'Connection Error';
+            if (m.indexOf('server error') !== -1 || m.indexOf('unavailable') !== -1) return 'Service Unavailable';
+            return 'Something Went Wrong';
+        }
+
         function appendError(msg) {
             var thread = document.getElementById('conversationThread');
             if (!thread) return;
 
+            var title = classifyErrorTitle(msg);
             var errorDiv = document.createElement('div');
             errorDiv.className = 'stream-error';
-            errorDiv.textContent = 'Error: ' + msg;
+            errorDiv.innerHTML = '<div class="error-title">' + escapeHtml(title) + '</div>'
+                + '<div class="error-message">' + escapeHtml(msg) + '</div>';
             thread.appendChild(errorDiv);
             thread.scrollTop = thread.scrollHeight;
         }

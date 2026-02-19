@@ -123,7 +123,9 @@ try {
 ; (see targeted_review.py)
 
 ; Ensure the shared DICOM service is running (only if demographic extraction is enabled)
-if (ConfigManager.config["Beta"].Get("demographic_extraction_enabled", false)) {
+_dicomEnabled := ConfigManager.config["Beta"].Get("demographic_extraction_enabled", false)
+Logger.Info("DICOM service check", {demographic_extraction_enabled: _dicomEnabled})
+if (_dicomEnabled) {
     try {
         cacheDir := ConfigManager.config["Beta"].Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT)
         EnsureDicomService(cacheDir)

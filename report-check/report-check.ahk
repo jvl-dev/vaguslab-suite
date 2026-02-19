@@ -139,16 +139,29 @@ if (ConfigManager.config["Beta"].Get("demographic_extraction_enabled", false)) {
 global _heartbeatFile := ""
 StartDicomHeartbeat() {
     global _heartbeatFile
-    ; Find the heartbeat path (same logic as EnsureDicomService)
-    devPath := A_ScriptDir . "\..\dicom-service\data"
-    prodPath := EnvGet("LOCALAPPDATA") . "\vaguslab\dicom-service\data"
-    if (DirExist(devPath))
-        _heartbeatFile := devPath . "\heartbeat"
-    else if (DirExist(prodPath))
-        _heartbeatFile := prodPath . "\heartbeat"
-    else
-        return  ; service data dir doesn't exist yet
+    ; Resolve the data directory — create it if the service is installed but
+    ; the data dir hasn't been created yet (race: the service may not have
+    ; run _acquire_lock() yet when we get here).
+    devDataDir := A_ScriptDir . "\..\dicom-service\data"
+    prodDataDir := EnvGet("LOCALAPPDATA") . "\vaguslab\dicom-service\data"
 
+    dataDir := ""
+    if (FileExist(A_ScriptDir . "\..\dicom-service\dicom_service.py")) {
+        ; Dev layout — service is installed; ensure data dir exists
+        if (!DirExist(devDataDir))
+            try DirCreate(devDataDir)
+        dataDir := devDataDir
+    } else if (FileExist(EnvGet("LOCALAPPDATA") . "\vaguslab\dicom-service\dicom_service.py")) {
+        ; Production layout — service is installed; ensure data dir exists
+        if (!DirExist(prodDataDir))
+            try DirCreate(prodDataDir)
+        dataDir := prodDataDir
+    }
+
+    if (dataDir = "")
+        return  ; service not installed
+
+    _heartbeatFile := dataDir . "\heartbeat"
     WriteDicomHeartbeat()  ; write immediately
     SetTimer(WriteDicomHeartbeat, 10000)  ; then every 10 s
 }

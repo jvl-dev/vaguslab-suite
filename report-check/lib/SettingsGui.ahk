@@ -54,7 +54,7 @@ class SettingsGui {
         this._RegisterCallbacks()
 
         ; Show the window
-        this.wvGui.Show("w700 h850")
+        this.wvGui.Show("w650 h750")
 
         ; Populate form after a short delay (ensures page is loaded)
         SetTimer(ObjBindMethod(this, "_PopulateForm"), -500)
@@ -105,16 +105,6 @@ class SettingsGui {
         ; Update mode warning visibility
         js .= "updateModeWarning();"
 
-        ; Prompts Tab - Update mode display
-        promptData := SettingsPresenter.GetPromptData(mode)
-        js .= "setText('promptsModeText', 'Current Mode: " this._EscapeJS(promptData.modeDisplay) " (change in Mode tab)');"
-        js .= "setText('promptsModeLabel', 'AI instructions for " this._EscapeJS(promptData.modeDisplay) " mode:');"
-
-        ; System prompt
-        systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "\n")
-        systemPromptForGUI := this._EscapeJS(systemPromptForGUI)
-        js .= "setValue('promptsSystemPrompt', '" systemPromptForGUI "');"
-
         ; API Tab - Provider
         js .= "setSelectValue('Provider', '" provider "');"
 
@@ -154,7 +144,7 @@ class SettingsGui {
         js .= "updateDependencies();"
 
         ; About Tab - Version
-        js .= "setText('aboutVersion', 'Report Check v" this._EscapeJS(VERSION) "');"
+        js .= "setText('aboutVersion', 'v" this._EscapeJS(VERSION) "');"
 
         ; Dark mode
         isDark := settings.Get("dark_mode_enabled", true)
@@ -217,9 +207,6 @@ class SettingsGui {
                 return
             }
 
-            ; Snapshot old mode BEFORE merging so prompts-tab refresh works
-            oldMode := ConfigManager.config["Settings"].Get("prompt_type", "comprehensive")
-
             ; Convert form data to config structure using ConfigBuilder
             newConfig := ConfigBuilder.BuildFromFormData(formData)
 
@@ -260,19 +247,6 @@ class SettingsGui {
 
             ; Update tray menu mode
             UpdateModeMenu()
-
-            ; Refresh prompts tab display if mode changed (compare against pre-merge value)
-            newMode := formData.Get("reviewMode", "comprehensive")
-            if (newMode != oldMode) {
-                promptData := SettingsPresenter.GetPromptData(newMode)
-                js := ""
-                js .= "setText('promptsModeText', 'Current Mode: " this._EscapeJS(promptData.modeDisplay) " (change in Mode tab)');"
-                js .= "setText('promptsModeLabel', 'AI instructions for " this._EscapeJS(promptData.modeDisplay) " mode:');"
-                systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "\n")
-                systemPromptForGUI := this._EscapeJS(systemPromptForGUI)
-                js .= "setValue('promptsSystemPrompt', '" systemPromptForGUI "');"
-                this.wvGui.ExecuteScriptAsync(js)
-            }
 
         } catch as err {
             Logger.Error("Auto-save error: " err.Message)
@@ -382,15 +356,6 @@ class SettingsGui {
                 this._ShowModal("Success", "System prompt has been refreshed from file.", "success")
             }
 
-            ; Get the freshly reloaded prompt data
-            mode := ConfigManager.config["Settings"]["prompt_type"]
-            promptData := SettingsPresenter.GetPromptData(mode)
-            systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "\n")
-            systemPromptForGUI := this._EscapeJS(systemPromptForGUI)
-
-            js := "setValue('promptsSystemPrompt', '" systemPromptForGUI "');"
-            this.wvGui.ExecuteScriptAsync(js)
-
         } catch as err {
             this._ShowModal("Error", "Error reloading prompts: " err.Message, "error")
         }
@@ -453,15 +418,6 @@ class SettingsGui {
             if (result.success) {
                 ; Reload prompts into cache
                 PromptCache.Reload(ConfigManager.configDir)
-
-                ; Refresh display
-                mode := ConfigManager.config["Settings"]["prompt_type"]
-                promptData := SettingsPresenter.GetPromptData(mode)
-                systemPromptForGUI := StrReplace(promptData.systemPrompt, "`n", "\n")
-                systemPromptForGUI := this._EscapeJS(systemPromptForGUI)
-
-                js := "setValue('promptsSystemPrompt', '" systemPromptForGUI "');"
-                this.wvGui.ExecuteScriptAsync(js)
 
                 ; Check if any files were skipped
                 filesCount := result.HasOwnProp("filesRestored") ? result.filesRestored : 0

@@ -28,12 +28,16 @@
 .footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     padding: 12px 16px;
     background: var(--color-bg-card);
     border-top: 1px solid var(--color-border);
     gap: 12px;
     flex-shrink: 0;
+}
+.footer-version {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
 }
 
 /* Main Layout - extends base body from components.css */
@@ -236,6 +240,7 @@ textarea:focus {
     color: var(--color-success);
     opacity: 0;
     transition: opacity 0.2s;
+    margin-left: auto;
 }
 .save-indicator.visible {
     opacity: 1;
@@ -246,7 +251,6 @@ textarea:focus {
     display: none;
     align-items: center;
     gap: 5px;
-    margin-right: auto;
     font-size: 11px;
     font-weight: 500;
     color: var(--color-text-muted);
@@ -278,17 +282,13 @@ textarea:focus {
 /* API Status */
 .api-status {
     font-size: 12px;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
     margin-top: 8px;
 }
 .api-status.success {
     color: var(--color-success);
-    background: var(--color-success-light);
 }
 .api-status.error {
     color: var(--color-danger);
-    background: var(--color-danger-light);
 }
 
 /* Hint Text */
@@ -307,6 +307,44 @@ textarea:focus {
     background: var(--color-bg-hint);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
+}
+
+/* Standalone hint-block (not inside a card) */
+.tab-pane > .hint-block {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+/* Details disclosure */
+details.card {
+    cursor: default;
+}
+details.card summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+details.card summary::-webkit-details-marker { display: none; }
+details.card summary::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid var(--color-text-muted);
+    border-bottom: 2px solid var(--color-text-muted);
+    transform: rotate(-45deg);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+details[open].card summary::after {
+    transform: rotate(45deg);
+}
+details.card .details-body {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border-light);
 }
 
 /* Scrollbar (Chromium) */
@@ -429,7 +467,7 @@ textarea:focus {
     text-align: center;
 }
 
-/* Utility classes (replaces inline styles) */
+/* Utility classes */
 .hidden { display: none; }
 .flex-row { display: flex; gap: var(--space-xs); }
 .flex-shrink-0 { flex-shrink: 0; }
@@ -455,9 +493,8 @@ textarea:focus {
 <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('mode', this)">Mode</button>
     <button class="tab-btn" onclick="switchTab('api', this)">API</button>
-    <button class="tab-btn" onclick="switchTab('prompts', this)">Prompts</button>
-    <button class="tab-btn" onclick="switchTab('beta', this)">Beta</button>
-    <button class="tab-btn" onclick="switchTab('about', this)">About</button>
+    <button class="tab-btn" onclick="switchTab('advanced', this)">Advanced</button>
+    <button class="tab-btn" onclick="switchTab('general', this)">General</button>
 </div>
 
 <!-- Tab Content -->
@@ -465,12 +502,6 @@ textarea:focus {
 
 <!-- ==================== Mode Tab ==================== -->
 <div id="tab-mode" class="tab-pane active">
-    <div class="card">
-        <div class="card-description">
-            Select the review mode for your reports. This determines the type of analysis the AI will perform.
-        </div>
-    </div>
-
     <div class="card">
         <div class="card-header">Review Mode</div>
         <input type="radio" name="reviewMode" id="ModeComprehensive" value="comprehensive" class="hidden">
@@ -503,29 +534,21 @@ textarea:focus {
         </div>
         <div class="hint">Models available depend on the AI provider selected in the API tab.</div>
     </div>
-</div>
 
-<!-- ==================== Prompts Tab ==================== -->
-<div id="tab-prompts" class="tab-pane">
-    <div class="card">
-        <div class="card-description">System prompts are stored locally and can be edited directly or restored to defaults. This should only be done by advanced users. Reload applies local edits. Restore downloads the latest defaults from the application server.</div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">System Prompts</div>
-        <div class="flex-row">
-            <button class="btn btn-secondary" onclick="ahk.ReloadFromFile()">Reload from File</button>
-            <button class="btn btn-secondary" onclick="ahk.RestoreFromServer()">Restore from Server</button>
+    <details class="card">
+        <summary class="card-header">System Prompts</summary>
+        <div class="details-body">
+            <div class="hint">Stored locally and can be reloaded or restored to defaults. Advanced users only.</div>
+            <div class="flex-row mt-sm">
+                <button class="btn btn-secondary" onclick="ahk.ReloadFromFile()">Reload from File</button>
+                <button class="btn btn-secondary" onclick="ahk.RestoreFromServer()">Restore from Server</button>
+            </div>
         </div>
-    </div>
+    </details>
 </div>
 
 <!-- ==================== API Tab ==================== -->
 <div id="tab-api" class="tab-pane">
-    <div class="card">
-        <div class="card-description">Configure API settings for AI providers.</div>
-    </div>
-
     <div class="card">
         <div class="card-header">Provider</div>
         <div class="form-group">
@@ -546,16 +569,18 @@ textarea:focus {
             <button class="btn btn-primary flex-shrink-0" onclick="ahk.TestAPIKey(JSON.stringify(collectFormData()))">Test</button>
         </div>
         <div id="apiStatus" class="api-status"></div>
+        <div class="hint mt-sm line-height-relaxed">
+            <div>Claude: <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> (paid)</div>
+            <div>Gemini: <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> (free option)</div>
+            <div>OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> (paid)</div>
+        </div>
     </div>
-
 </div>
 
-<!-- ==================== Beta Tab ==================== -->
-<div id="tab-beta" class="tab-pane">
-    <div class="card">
-        <div class="card-description">
-            You must not use these features to send personally identifiable information. DICOM demographic extraction reads age, sex, modality, and study description and is required for targeted review. PHI always stays local and is never sent to the LLM API.
-        </div>
+<!-- ==================== Advanced Tab ==================== -->
+<div id="tab-advanced" class="tab-pane">
+    <div class="hint-block">
+        You must not use these features to send personally identifiable information. DICOM demographic extraction reads age, sex, modality, and study description and is required for targeted review. PHI always stays local and is never sent to the LLM API.
     </div>
 
     <div class="card">
@@ -606,28 +631,18 @@ textarea:focus {
             Generates up to 5 anatomical focus areas (CT/MR/PET studies only).
         </div>
     </div>
-
 </div>
 
-<!-- ==================== About Tab ==================== -->
-<div id="tab-about" class="tab-pane">
+<!-- ==================== General Tab ==================== -->
+<div id="tab-general" class="tab-pane">
     <div class="card">
-        <div class="card-header" id="aboutVersion">Report Check</div>
-        <div class="hint">Experimental report review tool using LLMs. Use at your own risk. Ensure API keys are set up, select the preferred mode, and then highlight report text and press Ctrl + F11 to send for review.</div>
-        <div class="hint mt-sm">
-            View Documentation: (<a href="#" onclick="ahk.OpenReadme(); return false;">README.md</a>)
-        </div>
-        <div class="hint mt-sm">
-            Contact: <a href="mailto:rad@vaguslab.org">rad@vaguslab.org</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">Get API Keys</div>
-        <div class="hint line-height-relaxed">
-            <div>Claude: <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> (paid)</div>
-            <div>Gemini: <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a> (free option)</div>
-            <div>OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> (paid)</div>
+        <div class="card-header">Startup</div>
+        <div class="toggle-group">
+            <label class="toggle">
+                <input type="checkbox" id="StartupEnabled">
+                <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Launch Report Check when Windows starts</span>
         </div>
     </div>
 
@@ -639,17 +654,6 @@ textarea:focus {
                 <span class="toggle-slider"></span>
             </label>
             <span class="toggle-label">Dark mode</span>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">Startup Options</div>
-        <div class="toggle-group">
-            <label class="toggle">
-                <input type="checkbox" id="StartupEnabled">
-                <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Launch Report Check when Windows starts</span>
         </div>
     </div>
 
@@ -691,6 +695,7 @@ textarea:focus {
 <!-- Footer -->
 <div class="footer">
     <span class="dicom-lock-indicator" id="dicomLockIndicator"></span>
+    <span class="footer-version" id="aboutVersion"></span>
     <span class="save-indicator" id="saveIndicator">Settings saved</span>
     <button class="btn btn-primary" onclick="ahk.CloseSettings()">Close</button>
 </div>
@@ -790,13 +795,13 @@ function collectFormData() {
         ComprehensiveModel: val('ComprehensiveModel'),
         ProofreadingModel: val('ProofreadingModel'),
 
-        // Beta
+        // Advanced
         BetaModeOverrideHotkeys: chk('BetaModeOverrideHotkeys'),
         BetaPowerScribeAutoselect: chk('BetaPowerScribeAutoselect'),
         DemographicExtractionEnabled: chk('DemographicExtractionEnabled'),
         TargetedReviewEnabled: chk('TargetedReviewEnabled'),
 
-        // About / Settings
+        // General
         StartupEnabled: chk('StartupEnabled'),
         DarkModeEnabled: chk('DarkModeEnabled'),
         DebugLogging: chk('DebugLogging')
@@ -929,6 +934,12 @@ function updateDicomLockStatus(isEnabled, isLocked) {
     el.innerHTML = isLocked ? lockSvg : unlockSvg;
     el.classList.add('visible');
     el.classList.toggle('locked', isLocked);
+}
+
+function setUpdateProgress(pct, text) {
+    document.getElementById('updateProgressBar').style.width = pct + '%';
+    document.getElementById('updateProgressText').innerText = pct + '%';
+    if (text) document.getElementById('updateProgressDetails').innerText = text;
 }
 
 /* ============================================

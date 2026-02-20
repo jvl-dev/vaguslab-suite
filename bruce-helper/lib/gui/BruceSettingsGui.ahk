@@ -44,7 +44,7 @@ class BruceSettingsGui {
         this._ApplyTitleBarTheme()
 
         ; Show window
-        this.wvGui.Show("w600 h700")
+        this.wvGui.Show("w520 h580")
 
         ; Populate form after page loads
         SetTimer(ObjBindMethod(this, "_PopulateForm"), -500)
@@ -88,7 +88,7 @@ class BruceSettingsGui {
         js .= "setTheme('" (isDark ? "dark" : "light") "');"
 
         ; About
-        js .= "setText('aboutVersion', 'Bruce Helper v" this._EscapeJS(VERSION) "');"
+        js .= "setText('aboutVersion', 'v" this._EscapeJS(VERSION) "');"
         js .= "setText('updateStatusText', 'Current version: " this._EscapeJS(VERSION) "');"
 
         ; Status indicators (also used by live polling)

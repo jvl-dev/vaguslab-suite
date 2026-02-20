@@ -21,8 +21,9 @@ from utils import escape_html
 
 logger = logging.getLogger("report-check")
 
-# Version injected by backend.py at call time
-_VERSION = "0.21.7"
+# Fallback version — the real version is passed from AHK via the request JSON.
+# This only applies if the request omits it (e.g. old AHK calling new Python).
+_VERSION = "0.30.2"
 
 
 def generate_html_file(
@@ -35,7 +36,7 @@ def generate_html_file(
     targeted_user_message="",
     targeted_demographics_label="",
     analysis_demographics_label="",
-    version="0.21.7",
+    version="0.30.2",
     output_dir=None,
     session_id="",
 ):
@@ -50,9 +51,6 @@ def generate_html_file(
     6. Renders the template
     7. Writes the HTML file
     """
-    global _VERSION
-    _VERSION = version
-
     if output_dir is None:
         output_dir = os.path.join(os.environ.get("TEMP", "/tmp"), "RadReviewResults")
     os.makedirs(output_dir, exist_ok=True)
@@ -408,8 +406,22 @@ def _render_template(metadata_html, ai_html, original_html,
         with open(template_path, encoding="utf-8") as f:
             template = f.read()
 
+        # Read theme.css (structural tokens) + rc-theme.css (colors) for inline injection
+        theme_css_content = ""
+        for css_rel in [
+            os.path.join("..", "shared", "gui", "theme.css"),
+            os.path.join("lib", "gui", "rc-theme.css"),
+        ]:
+            css_path = os.path.join(script_dir, css_rel)
+            try:
+                with open(css_path, encoding="utf-8") as f:
+                    theme_css_content += f.read() + "\n"
+            except (FileNotFoundError, OSError) as e:
+                logger.warning(f"Could not read {css_rel}: {e}")
+
         # Replace placeholders
-        html = template.replace("{{METADATA}}", metadata_html)
+        html = template.replace("{{THEME_CSS}}", theme_css_content)
+        html = html.replace("{{METADATA}}", metadata_html)
         html = html.replace("{{AI_ANALYSIS}}", ai_html)
         html = html.replace("{{ORIGINAL_REPORT}}", original_html)
         html = html.replace("{{VERSION}}", version)

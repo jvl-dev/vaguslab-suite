@@ -60,9 +60,10 @@ class DicomMonitor:
     """Core DICOM monitoring logic."""
 
     def __init__(self, *, cache_dir, data_dir, search_timeout=120,
-                 cache_size=5, max_scan_folders=50):
+                 cache_size=5, max_scan_folders=50, perf_log_path=""):
         self.cache_dir = cache_dir
         self.data_dir = data_dir
+        self.perf_log_path = perf_log_path
         self.state_file = os.path.join(data_dir, "current_study.json")
         self.search_timeout = search_timeout
         self.cache_size = cache_size
@@ -93,7 +94,7 @@ class DicomMonitor:
         if self.window_monitor and not self.window_monitor.last_patient_title:
             return
 
-        log_path = _psone_log_path()
+        log_path = _psone_log_path(self.perf_log_path)
         if not log_path or not os.path.isfile(log_path):
             return
 
@@ -364,8 +365,15 @@ def _looks_like_uid(name):
     return bool(name) and name[0].isdigit() and "." in name
 
 
-def _psone_log_path():
-    """Derive the PSOnePerf.log path from %USERPROFILE%."""
+def _psone_log_path(override=""):
+    """Return the PSOnePerf.log path.
+
+    If *override* is a non-empty string it is returned directly (explicit
+    path from config.ini).  Otherwise the path is derived from
+    ``%USERPROFILE%``.
+    """
+    if override:
+        return override
     profile = os.environ.get("USERPROFILE", "")
     if not profile:
         return ""

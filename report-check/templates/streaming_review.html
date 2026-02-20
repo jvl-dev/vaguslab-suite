@@ -5,69 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Check - Reviewing...</title>
     <script>
-    // Apply theme immediately (before paint) to prevent light→dark flash
+    // Apply theme + load shared CSS immediately (before paint) to prevent FOUC
     (function() {
-        var m = location.search.match(/[?&]theme=(dark|light)/);
-        if (m) document.documentElement.dataset.theme = m[1];
+        var p = new URLSearchParams(location.search);
+        if (p.get('theme')) document.documentElement.dataset.theme = p.get('theme');
+        var s = p.get('shared') || '../lib/gui';
+        document.write('<link rel="stylesheet" href="' + s + '/theme.css">');
+        document.write('<link rel="stylesheet" href="../lib/gui/rc-theme.css">');
     })();
     </script>
     <style>
-        :root {
-            /* Color Palette - Light Theme (default) */
-            --color-bg-primary: #f1f5f9;
-            --color-bg-secondary: #ffffff;
-            --color-bg-tertiary: #f8fafc;
-            --color-border: #e2e8f0;
-            --color-border-accent: #2a9d8f;
-            --color-text-primary: #1e293b;
-            --color-text-secondary: #64748b;
-            --color-text-muted: #94a3b8;
-            --color-h1: #2a9d8f;
-            --color-h2: #388e3c;
-            --color-h3: #43a047;
-            --color-highlight: #2a9d8f;
-            --color-code: #d63384;
-            --color-accent-bg: rgba(42, 157, 143, 0.06);
-            --color-accent-border: rgba(42, 157, 143, 0.2);
-            --color-accent-shadow: rgba(42, 157, 143, 0.1);
-            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-            /* Non-theme-dependent */
-            --font-family-base: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            --font-family-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
-            --font-size-base: 15px;
-            --font-size-sm: 13px;
-            --line-height-base: 1.6;
-            --line-height-tight: 1.4;
-            --border-radius: 6px;
-            --spacing-xs: 8px;
-            --spacing-sm: 12px;
-            --spacing-md: 20px;
-            --spacing-lg: 30px;
-            --spacing-xl: 40px;
-        }
-
-        /* Dark Theme Overrides */
-        [data-theme="dark"] {
-            --color-bg-primary: #1a1a1a;
-            --color-bg-secondary: #2d2d2d;
-            --color-bg-tertiary: #333333;
-            --color-border: #424242;
-            --color-border-accent: #4db6ac;
-            --color-text-primary: #e0e0e0;
-            --color-text-secondary: #b0b0b0;
-            --color-text-muted: #666666;
-            --color-h1: #4db6ac;
-            --color-h2: #66bb6a;
-            --color-h3: #81c784;
-            --color-highlight: #80cbc4;
-            --color-code: #ff6b9d;
-            --color-accent-bg: rgba(77, 182, 172, 0.08);
-            --color-accent-border: rgba(77, 182, 172, 0.25);
-            --color-accent-shadow: rgba(77, 182, 172, 0.15);
-            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
         * { box-sizing: border-box; }
 
         body {
@@ -76,8 +23,8 @@
             line-height: var(--line-height-base);
             margin: 0;
             padding: var(--spacing-md);
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
+            background: var(--color-bg);
+            color: var(--color-text);
         }
 
         .container {
@@ -99,7 +46,7 @@
             font-family: var(--font-family-base);
             font-size: 28px;
             font-weight: 600;
-            color: var(--color-text-muted);
+            color: var(--color-h1);
             margin: 0;
             letter-spacing: -0.3px;
             padding: 6px 14px;
@@ -113,7 +60,7 @@
 
         .version {
             font-size: 11px;
-            color: var(--color-text-muted);
+            color: var(--color-text-secondary);
             font-weight: 500;
             letter-spacing: 0.5px;
             padding: 6px 10px;
@@ -130,42 +77,104 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 80px var(--spacing-md);
+            padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
         }
-
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 3px solid var(--color-border);
-            border-top-color: var(--color-border-accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: var(--spacing-md);
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         .loading-text {
             font-size: 18px;
             font-weight: 600;
-            color: var(--color-text-primary);
+            color: var(--color-text);
             margin-bottom: var(--spacing-xs);
         }
 
         .loading-subtext {
             font-size: var(--font-size-sm);
             color: var(--color-text-muted);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* Skeleton shimmer */
+        .skeleton-card {
+            width: 100%;
+            max-width: 900px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            box-shadow: var(--shadow-card);
+        }
+
+        .skeleton-header {
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .skeleton-line {
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(
+                90deg,
+                var(--color-border) 0%,
+                var(--color-bg-hint) 40%,
+                var(--color-border) 80%
+            );
+            background-size: 300% 100%;
+            animation: shimmer 1.8s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        .skeleton-line:last-child { margin-bottom: 0; }
+
+        .skeleton-title {
+            height: 20px;
+            width: 35%;
+            margin-bottom: 0;
+        }
+
+        .skeleton-full   { width: 100%; }
+        .skeleton-long   { width: 88%; }
+        .skeleton-medium { width: 65%; }
+        .skeleton-short  { width: 42%; }
+
+        .skeleton-gap { height: 0; margin-bottom: var(--spacing-md); }
+
+        .skeleton-line:nth-child(2) { animation-delay: 0.1s; }
+        .skeleton-line:nth-child(3) { animation-delay: 0.2s; }
+        .skeleton-line:nth-child(4) { animation-delay: 0.1s; }
+        .skeleton-line:nth-child(5) { animation-delay: 0.15s; }
+        .skeleton-line:nth-child(6) { animation-delay: 0.25s; }
+        .skeleton-line:nth-child(7) { animation-delay: 0.1s; }
+        .skeleton-line:nth-child(8) { animation-delay: 0.2s; }
+
+        @keyframes shimmer {
+            0%   { background-position: 300% 0; }
+            100% { background-position: -300% 0; }
+        }
+
+        /* Streaming section entrance */
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .stream-enter {
+            animation: fadeSlideIn 0.4s ease-out both;
+        }
+
+        /* Error entrance */
+        .error-enter {
+            animation: fadeSlideIn 0.3s ease-out both;
         }
 
         /* Report sections — matches review template */
         .report-section {
-            background: var(--color-bg-secondary);
+            background: var(--color-bg-card);
             border: 1px solid var(--color-border);
             border-radius: var(--border-radius);
             padding: var(--spacing-md);
             margin-bottom: var(--spacing-lg);
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow-card);
         }
 
         .original-report-header {
@@ -178,7 +187,7 @@
         }
 
         .analysis-content {
-            background: var(--color-bg-primary);
+            background: var(--color-bg);
             padding: var(--spacing-md);
             border-radius: var(--border-radius);
             border: 1px solid var(--color-border);
@@ -227,7 +236,7 @@
         code {
             font-family: var(--font-family-mono);
             font-size: 14px;
-            background: var(--color-bg-primary);
+            background: var(--color-bg);
             padding: 2px 6px;
             border-radius: 3px;
             border: 1px solid var(--color-border);
@@ -268,12 +277,12 @@
 
         /* Error display */
         .stream-error {
-            background: var(--color-bg-secondary);
+            background: var(--color-bg-card);
             border: 1px solid var(--color-border);
             border-radius: var(--border-radius);
             padding: var(--spacing-md) var(--spacing-md);
             margin-top: var(--spacing-md);
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow-card);
         }
 
         .stream-error .error-icon {
@@ -284,14 +293,21 @@
         .stream-error .error-title {
             font-size: 18px;
             font-weight: 600;
-            color: #ef5350;
+            color: var(--color-danger);
             margin-bottom: var(--spacing-xs);
         }
 
         .stream-error .error-message {
             font-size: var(--font-size-base);
-            color: var(--color-text-primary);
+            color: var(--color-text);
             line-height: var(--line-height-base);
+        }
+
+        /* Accessibility: reduce motion */
+        @media (prefers-reduced-motion: reduce) {
+            .skeleton-line { animation: none; }
+            .streaming-cursor { animation: none; opacity: 1; }
+            .stream-enter, .error-enter { animation: none; }
         }
 
         /* Footer — matches review template */
@@ -315,11 +331,25 @@
             <span class="version">Reviewing...</span>
         </div>
 
-        <!-- Loading spinner (shown initially) -->
+        <!-- Loading skeleton (shown initially) -->
         <div id="loadingState" class="loading-state">
-            <div class="spinner"></div>
             <div class="loading-text">Analyzing your report...</div>
             <div class="loading-subtext">Response will stream as it arrives</div>
+            <div class="skeleton-card">
+                <div class="skeleton-header">
+                    <div class="skeleton-line skeleton-title"></div>
+                </div>
+                <div class="skeleton-line skeleton-full"></div>
+                <div class="skeleton-line skeleton-full"></div>
+                <div class="skeleton-line skeleton-long"></div>
+                <div class="skeleton-line skeleton-gap"></div>
+                <div class="skeleton-line skeleton-full"></div>
+                <div class="skeleton-line skeleton-full"></div>
+                <div class="skeleton-line skeleton-medium"></div>
+                <div class="skeleton-line skeleton-gap"></div>
+                <div class="skeleton-line skeleton-full"></div>
+                <div class="skeleton-line skeleton-short"></div>
+            </div>
         </div>
 
         <!-- Streaming content (shown when tokens arrive) -->
@@ -345,11 +375,13 @@
         function appendStreamChunk(text) {
             _streamAccumulator += text;
 
-            // On first chunk, switch from loading spinner to streaming content
+            // On first chunk, switch from skeleton to streaming content
             if (!_streamingStarted) {
                 _streamingStarted = true;
                 document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('streamingSection').style.display = 'block';
+                var section = document.getElementById('streamingSection');
+                section.style.display = 'block';
+                section.classList.add('stream-enter');
                 // Update header badge
                 document.querySelector('.version').textContent = 'Streaming...';
             }
@@ -381,6 +413,7 @@
                 + '<div class="error-title">' + escapeHtml(title) + '</div>'
                 + '<div class="error-message">' + escapeHtml(msg) + '</div>';
             errorEl.style.display = 'block';
+            errorEl.classList.add('error-enter');
             document.querySelector('.version').textContent = 'Error';
         }
 

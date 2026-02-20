@@ -28,7 +28,7 @@ import targeted_review
 import session_manager
 import utils
 
-VERSION = "0.21.7"
+VERSION = "0.30.2"
 
 
 def main():
@@ -216,7 +216,7 @@ def handle_review(request):
             targeted_user_message=targeted_user_message,
             targeted_demographics_label=targeted_demographics_label,
             analysis_demographics_label=analysis_demographics_label,
-            version=VERSION,
+            version=request.get("version", VERSION),
             session_id=session_id,
         )
     except Exception as e:
@@ -464,7 +464,7 @@ def handle_stream_review(request):
             targeted_user_message=targeted_user_message,
             targeted_demographics_label=targeted_demographics_label,
             analysis_demographics_label=analysis_demographics_label,
-            version=VERSION,
+            version=request.get("version", VERSION),
             session_id=session_id,
         )
     except Exception as e:

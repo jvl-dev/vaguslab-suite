@@ -46,7 +46,8 @@ class SettingsGui {
         ; Navigate to settings page (pass theme via query param to prevent flash)
         isDark := ConfigManager.config.Has("Settings") && ConfigManager.config["Settings"].Has("dark_mode_enabled")
             ? !!ConfigManager.config["Settings"]["dark_mode_enabled"] : true
-        htmlPath := "file:///" StrReplace(A_ScriptDir "\lib\gui\settings.html", "\", "/") "?theme=" (isDark ? "dark" : "light")
+        sharedDir := "file:///" StrReplace(A_ScriptDir "\..\shared\gui", "\", "/")
+        htmlPath := "file:///" StrReplace(A_ScriptDir "\lib\gui\settings.html", "\", "/") "?theme=" (isDark ? "dark" : "light") "&shared=" sharedDir
         this.wvGui.Navigate(htmlPath)
 
         ; Register all JS → AHK callback functions
@@ -74,7 +75,6 @@ class SettingsGui {
         this.wvGui.AddCallbackToScript("ReloadFromFile", ObjBindMethod(this, "_OnReloadFromFile"))
         this.wvGui.AddCallbackToScript("RestoreFromServer", ObjBindMethod(this, "_OnRestoreFromServer"))
         this.wvGui.AddCallbackToScript("ConfirmRestoreFromServer", ObjBindMethod(this, "_OnConfirmRestoreFromServer"))
-        this.wvGui.AddCallbackToScript("BrowseDicomCache", ObjBindMethod(this, "_OnBrowseDicomCache"))
         this.wvGui.AddCallbackToScript("DiagnoseKeys", ObjBindMethod(this, "_OnDiagnoseKeys"))
         this.wvGui.AddCallbackToScript("RetryDiagnoseKeys", ObjBindMethod(this, "_ShowDiagnosticDialog"))
         this.wvGui.AddCallbackToScript("OpenReadme", ObjBindMethod(this, "_OnOpenReadme"))
@@ -147,9 +147,6 @@ class SettingsGui {
         js .= "setCheckbox('BetaModeOverrideHotkeys', " (beta.Get("mode_override_hotkeys", false) ? "true" : "false") ");"
         js .= "setCheckbox('BetaPowerScribeAutoselect', " (beta.Get("powerscribe_autoselect", false) ? "true" : "false") ");"
         js .= "setCheckbox('DemographicExtractionEnabled', " (beta.Get("demographic_extraction_enabled", false) ? "true" : "false") ");"
-
-        dicomDir := beta.Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT)
-        js .= "setValue('DicomCacheDirectory', '" this._EscapeJS(dicomDir) "');"
 
         js .= "setCheckbox('TargetedReviewEnabled', " (settings.Get("targeted_review_enabled", false) ? "true" : "false") ");"
 
@@ -254,8 +251,7 @@ class SettingsGui {
             ; (handles first-time enable and restart-after-settings-change)
             if (ConfigManager.config["Beta"].Get("demographic_extraction_enabled", false)) {
                 try {
-                    cacheDir := ConfigManager.config["Beta"].Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT)
-                    EnsureDicomService(cacheDir)
+                    EnsureDicomService()
                     StartDicomHeartbeat()
                 } catch as err {
                     Logger.Warning("Failed to ensure DICOM service after settings change", {error: err.Message})
@@ -494,26 +490,6 @@ class SettingsGui {
         }
     }
 
-    ; ==========================================
-    ; DICOM Cache Browser
-    ; ==========================================
-    static _OnBrowseDicomCache(wv) {
-        try {
-            selectedFolder := DirSelect("*", 3, "Select DICOM Cache Directory")
-
-            if (selectedFolder != "") {
-                ; Update form
-                js := "setValue('DicomCacheDirectory', '" this._EscapeJS(selectedFolder) "');"
-                this.wvGui.ExecuteScriptAsync(js)
-
-                ; Trigger auto-save
-                js := "autoSave();"
-                this.wvGui.ExecuteScriptAsync(js)
-            }
-        } catch as err {
-            Logger.Error("Browse DICOM cache error: " err.Message)
-        }
-    }
 
     ; ==========================================
     ; Troubleshooting

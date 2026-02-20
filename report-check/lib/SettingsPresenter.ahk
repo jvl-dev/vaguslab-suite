@@ -143,7 +143,6 @@ class SettingsPresenter {
         ConfigManager.config["Beta"]["demographic_extraction_enabled"] := !!values.DemographicExtractionEnabled
         ConfigManager.config["Beta"]["mode_override_hotkeys"] := !!values.BetaModeOverrideHotkeys
         ConfigManager.config["Beta"]["powerscribe_autoselect"] := !!values.BetaPowerScribeAutoselect
-        ConfigManager.config["Beta"]["dicom_cache_directory"] := Trim(values.DicomCacheDirectory)
 
         ; Targeted Review is in Settings section (not Beta) but shown on Beta tab
         if (values.HasProp("TargetedReviewEnabled")) {

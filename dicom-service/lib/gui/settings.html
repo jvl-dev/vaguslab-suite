@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+// Apply theme + load shared CSS + local dicom theme (before paint)
+(function() {
+    var p = new URLSearchParams(location.search);
+    if (p.get('theme')) document.documentElement.dataset.theme = p.get('theme');
+    var s = p.get('shared') || '.';
+    document.write('<link rel="stylesheet" href="' + s + '/theme.css">');
+    document.write('<link rel="stylesheet" href="' + s + '/components.css">');
+    document.write('<link rel="stylesheet" href="dicom-theme.css">');
+})();
+</script>
+<style>
+/* Titlebar - ensure Webdings font for window control buttons */
+.titlebar-btn {
+    font-family: Webdings;
+}
+
+/* Main Layout */
+body {
+    background: var(--color-bg);
+    height: 100vh;
+}
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--color-bg);
+}
+
+/* Content */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    scroll-behavior: smooth;
+}
+
+/* Card entrance animation */
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.content .card {
+    animation: cardFadeIn 0.3s ease-out both;
+}
+.content .card:nth-child(2) { animation-delay: 0.04s; }
+.content .card:nth-child(3) { animation-delay: 0.08s; }
+.content .card:nth-child(4) { animation-delay: 0.12s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .content .card { animation: none; }
+}
+
+/* Status indicator */
+.service-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--color-text-muted);
+    transition: background 0.2s;
+}
+.status-dot.active {
+    background: var(--color-success);
+}
+.status-text {
+    flex: 1;
+}
+
+/* Form Controls */
+.form-group label { width: 160px; }
+.form-group input[type="number"] {
+    width: 100px;
+    padding: 7px 10px;
+    border: 1px solid var(--color-border-input);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg-card);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+}
+.form-group input[type="number"]:focus {
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+.form-group input[type="text"] { min-width: 0; }
+
+/* Stacked form group — label on top, input row below.
+   Used for path fields so the input + Browse button get the full card width. */
+.form-group-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.form-group-stacked label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-label);
+}
+.form-group-stacked .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.form-group-stacked .input-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid var(--color-border-input);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg-card);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+}
+.form-group-stacked .input-row input[type="text"]:focus {
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+/* Hint text */
+.hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-bg-card);
+    border-top: 1px solid var(--color-border);
+    gap: 12px;
+    flex-shrink: 0;
+}
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Save Indicator */
+.save-indicator {
+    font-size: 12px;
+    color: var(--color-success);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.save-indicator.visible {
+    opacity: 1;
+}
+
+/* Scrollbar (Chromium) */
+.content::-webkit-scrollbar { width: 8px; }
+.content::-webkit-scrollbar-track { background: var(--color-bg); }
+.content::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 4px; }
+.content::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
+
+/* Modal Dialog */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--color-overlay);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-dialog {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-elevated);
+    width: 420px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.96) translateY(8px);
+    transition: transform 0.2s ease;
+}
+.modal-overlay.active .modal-dialog {
+    transform: scale(1) translateY(0);
+}
+.modal-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+.modal-body {
+    padding: 16px 20px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border-light);
+    flex-shrink: 0;
+}
+
+/* Utility */
+.hidden { display: none; }
+.flex-row { display: flex; gap: var(--space-xs); }
+.flex-shrink-0 { flex-shrink: 0; }
+.flex-fill { flex: 1; max-width: none; }
+.mt-xs { margin-top: var(--space-xxs); }
+.mt-sm { margin-top: var(--space-xs); }
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+    <span class="titlebar-text">DICOM Service Settings</span>
+    <span class="titlebar-btn" onclick="ahk.MinimizeWindow()" title="Minimize">0</span>
+    <span class="titlebar-btn titlebar-btn-close" onclick="ahk.CloseSettings()" title="Close">r</span>
+</div>
+
+<div class="main">
+<div class="content">
+
+    <div class="card">
+        <div class="card-header">Service Status</div>
+        <div class="service-status">
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="statusText">Checking...</span>
+            <button class="btn btn-secondary" id="restartBtn" onclick="ahk.RestartService()">Restart Service</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">DICOM Cache</div>
+        <div class="form-group-stacked">
+            <label>Cache directory</label>
+            <div class="input-row">
+                <input type="text" id="DicomCacheDirectory" placeholder="C:\Intelerad\InteleViewerDicom">
+                <button class="btn btn-secondary flex-shrink-0" onclick="ahk.BrowseFolder('DicomCacheDirectory')">Browse</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Performance Log</div>
+        <div class="form-group-stacked">
+            <label>PSOnePerf.log path</label>
+            <div class="input-row">
+                <input type="text" id="PerfLogPath" placeholder="Auto-detected (optional override)">
+                <button class="btn btn-secondary flex-shrink-0" onclick="ahk.BrowseFile('PerfLogPath')">Browse</button>
+            </div>
+        </div>
+        <div class="hint">Leave blank to auto-detect from the default per-user location.</div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Advanced</div>
+        <div class="form-group">
+            <label>Poll interval (seconds):</label>
+            <input type="number" id="TimerInterval" min="0.5" max="10" step="0.5" value="2.0">
+        </div>
+        <div class="form-group">
+            <label>Search timeout (seconds):</label>
+            <input type="number" id="SearchTimeout" min="10" max="600" step="10" value="120">
+        </div>
+        <div class="form-group">
+            <label>Study cache size:</label>
+            <input type="number" id="CacheSize" min="1" max="50" step="1" value="10">
+        </div>
+        <div class="form-group">
+            <label>Max folders to scan:</label>
+            <input type="number" id="MaxScanFolders" min="5" max="200" step="5" value="50">
+        </div>
+    </div>
+
+</div><!-- end content -->
+
+<!-- Footer -->
+<div class="footer">
+    <div class="footer-left">
+        <span class="save-indicator" id="saveIndicator">Settings saved</span>
+        <span class="hint" style="margin-top:0;">Changes take effect on service restart</span>
+    </div>
+    <button class="btn btn-primary" onclick="ahk.CloseSettings()">Close</button>
+</div>
+
+</div><!-- end main -->
+
+<!-- Modal Dialog -->
+<div class="modal-overlay" id="modalOverlay" onclick="onModalOverlayClick(event)">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <span id="modalTitle"></span>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer" id="modalFooter"></div>
+    </div>
+</div>
+
+<script>
+/* ============================================
+   Theme Management
+   ============================================ */
+function setTheme(mode) {
+    document.documentElement.dataset.theme = mode;
+}
+
+/* ============================================
+   Modal Dialog
+   ============================================ */
+function showModal(title, body, icon, buttons) {
+    var overlay = document.getElementById('modalOverlay');
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = body;
+
+    var footerEl = document.getElementById('modalFooter');
+    footerEl.innerHTML = '';
+    (buttons || [{ label: 'OK', style: 'primary', action: 'close' }]).forEach(function(btn) {
+        var el = document.createElement('button');
+        el.className = 'btn btn-' + (btn.style || 'primary');
+        el.textContent = btn.label;
+        el.onclick = function() {
+            hideModal();
+            if (btn.action && btn.action !== 'close') {
+                if (typeof ahk !== 'undefined' && typeof ahk[btn.action] === 'function') {
+                    ahk[btn.action]();
+                }
+            }
+        };
+        footerEl.appendChild(el);
+    });
+
+    overlay.classList.add('active');
+}
+
+function hideModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function onModalOverlayClick(event) {
+    if (event.target === event.currentTarget) hideModal();
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('modalOverlay').classList.contains('active')) {
+        hideModal();
+    }
+});
+
+/* ============================================
+   Form Data Collection
+   ============================================ */
+function collectFormData() {
+    var val = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+
+    return {
+        DicomCacheDirectory: val('DicomCacheDirectory'),
+        PerfLogPath: val('PerfLogPath'),
+        TimerInterval: val('TimerInterval'),
+        SearchTimeout: val('SearchTimeout'),
+        CacheSize: val('CacheSize'),
+        MaxScanFolders: val('MaxScanFolders')
+    };
+}
+
+/* ============================================
+   Auto-Save
+   ============================================ */
+var _autoSaveTimer = null;
+var _saveIndicatorTimer = null;
+function autoSave() {
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(function() {
+        ahk.AutoSaveSettings(JSON.stringify(collectFormData()));
+        var el = document.getElementById('saveIndicator');
+        el.classList.add('visible');
+        clearTimeout(_saveIndicatorTimer);
+        _saveIndicatorTimer = setTimeout(function() { el.classList.remove('visible'); }, 1500);
+    }, 300);
+}
+
+function initAutoSaveListeners() {
+    document.querySelectorAll('input, select').forEach(function(el) {
+        var evt = (el.type === 'text' || el.type === 'number') ? 'input' : 'change';
+        el.addEventListener(evt, autoSave);
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAutoSaveListeners);
+} else {
+    initAutoSaveListeners();
+}
+
+/* ============================================
+   Helper Functions (called from AHK)
+   ============================================ */
+function setValue(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.value = value;
+}
+
+function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.innerText = text;
+}
+
+function setHTML(id, html) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+}
+
+function setStyle(id, prop, value) {
+    var el = document.getElementById(id);
+    if (el) el.style[prop] = value;
+}
+
+function setDisabled(id, disabled) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = disabled;
+}
+
+function setStatus(running, pid) {
+    var dot = document.getElementById('statusDot');
+    var text = document.getElementById('statusText');
+    if (running) {
+        dot.classList.add('active');
+        text.textContent = 'Running (PID ' + pid + ')';
+    } else {
+        dot.classList.remove('active');
+        text.textContent = 'Stopped';
+    }
+}
+</script>
+
+</body>
+</html>

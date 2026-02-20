@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="components.css">
 <script>
 (function() {
-    var m = location.search.match(/[?&]theme=(dark|light)/);
-    if (m) document.documentElement.dataset.theme = m[1];
+    var p = new URLSearchParams(location.search);
+    if (p.get('theme')) document.documentElement.dataset.theme = p.get('theme');
+    var s = p.get('shared') || '.';
+    document.write('<link rel="stylesheet" href="' + s + '/theme.css">');
+    document.write('<link rel="stylesheet" href="' + s + '/components.css">');
+    document.write('<link rel="stylesheet" href="rc-theme.css">');
 })();
 </script>
 <style>

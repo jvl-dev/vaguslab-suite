@@ -128,6 +128,7 @@ def _read_config(cache_dir_override=None):
         "search_timeout": cp.getint("service", "search_timeout", fallback=120),
         "cache_size": cp.getint("service", "cache_size", fallback=5),
         "max_scan_folders": cp.getint("service", "max_scan_folders", fallback=50),
+        "perf_log_path": cp.get("service", "perf_log_path", fallback=""),
     }
 
     if cache_dir_override:
@@ -165,6 +166,7 @@ def main():
         search_timeout=cfg["search_timeout"],
         cache_size=cfg["cache_size"],
         max_scan_folders=cfg["max_scan_folders"],
+        perf_log_path=cfg.get("perf_log_path", ""),
     )
 
     win_mon = WindowMonitor()
@@ -172,7 +174,7 @@ def main():
 
     # watchdog: watch the PSOnePerf.log directory
     observer = None
-    psone_log_dir = _psone_log_dir()
+    psone_log_dir = _psone_log_dir(cfg.get("perf_log_path", ""))
     if psone_log_dir and os.path.isdir(psone_log_dir):
         from watchdog.observers import Observer
         observer = Observer()
@@ -253,7 +255,15 @@ def main():
         log.info("Service stopped")
 
 
-def _psone_log_dir():
+def _psone_log_dir(perf_log_path=""):
+    """Return the directory containing PSOnePerf.log.
+
+    If *perf_log_path* is set (from config.ini), derive the directory from
+    that explicit path.  Otherwise fall back to the default %USERPROFILE%
+    derivation.
+    """
+    if perf_log_path:
+        return os.path.dirname(perf_log_path)
     profile = os.environ.get("USERPROFILE", "")
     if not profile:
         return ""

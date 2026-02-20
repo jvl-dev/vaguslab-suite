@@ -37,6 +37,9 @@ class ReviewGui {
         ; Register JS → AHK callbacks
         this._RegisterCallbacks()
 
+        ; Match native title bar to app theme
+        this._ApplyTitleBarTheme()
+
         ; Show window
         this.wvGui.Show("w" Constants.REVIEW_WINDOW_WIDTH " h" Constants.REVIEW_WINDOW_HEIGHT)
     }
@@ -64,6 +67,9 @@ class ReviewGui {
 
         ; Register callbacks (persist across navigations)
         this._RegisterCallbacks()
+
+        ; Match native title bar to app theme
+        this._ApplyTitleBarTheme()
 
         ; Show window
         this.wvGui.Show("w" Constants.REVIEW_WINDOW_WIDTH " h" Constants.REVIEW_WINDOW_HEIGHT)
@@ -298,7 +304,21 @@ class ReviewGui {
 
     static _GetThemeParam() {
         isDark := ConfigManager.config["Settings"].Get("dark_mode_enabled", true)
-        return "?theme=" (isDark ? "dark" : "light")
+        sharedDir := "file:///" StrReplace(A_ScriptDir "\..\shared\gui", "\", "/")
+        return "?theme=" (isDark ? "dark" : "light") "&shared=" sharedDir
+    }
+
+    ; Set native Windows title bar to dark/light to match app theme
+    static _ApplyTitleBarTheme() {
+        if (!this.wvGui || !this.wvGui.Hwnd)
+            return
+        isDark := ConfigManager.config["Settings"].Get("dark_mode_enabled", true)
+        ; DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+        DllCall("Dwmapi.dll\DwmSetWindowAttribute"
+            , "Ptr", this.wvGui.Hwnd
+            , "UInt", 20
+            , "Ptr*", isDark ? 1 : 0
+            , "UInt", 4)
     }
 
     static _EscapeJS(str) {

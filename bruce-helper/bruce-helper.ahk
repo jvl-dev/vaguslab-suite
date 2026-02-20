@@ -61,6 +61,11 @@ global VERSION := "1.0.0"
 
 ; ===== LIBRARIES =====
 #Include lib\Logger.ahk
+#Include ..\shared\vendor\ComVar.ahk
+#Include ..\shared\vendor\Promise.ahk
+#Include ..\shared\vendor\WebView2.ahk
+#Include ..\shared\vendor\WebViewToo.ahk
+#Include lib\gui\BruceSettingsGui.ahk
 
 ; ===== CONSTANTS =====
 ; Centralized constants to avoid magic numbers
@@ -110,8 +115,7 @@ class Config {
         "powerscribe_select_delay", "50",
         "clipboard_defer_delay", "200",
         "launch_on_startup", "false",
-        "dicom_cache_dir", "C:\Intelerad\InteleViewerDicom",
-        "perf_log_path", ""
+        "dark_mode_enabled", "true"
     )
 
     ; Load configuration from INI file
@@ -139,8 +143,7 @@ class Config {
                 "powerscribe_select_delay", "Delay after Ctrl+A in PowerScribe (milliseconds)",
                 "clipboard_defer_delay", "Delay before processing clipboard changes (milliseconds)",
                 "launch_on_startup", "Launch Bruce Helper when Windows starts (true/false)",
-                "dicom_cache_dir", "DICOM cache directory for InteleViewer integration (leave blank to disable)",
-                "perf_log_path", "Override path to PSOnePerf.log (leave blank to use default per-user path)"
+                "dark_mode_enabled", "Enable dark mode for settings GUI (true/false)"
             )
 
             needsMigration := false
@@ -207,12 +210,8 @@ class Config {
             content .= "clipboard_defer_delay=" this.defaults["clipboard_defer_delay"] "`n`n"
             content .= "; Launch Bruce Helper when Windows starts (true/false)`n"
             content .= "launch_on_startup=" this.defaults["launch_on_startup"] "`n`n"
-            content .= "; DICOM cache directory for InteleViewer integration (leave blank to disable)`n"
-            content .= "dicom_cache_dir=" this.defaults["dicom_cache_dir"] "`n`n"
-            content .= "; Override path to PSOnePerf.log (leave blank to use default per-user path)`n"
-            content .= "; %USERPROFILE% is expanded at runtime so the path stays portable across accounts`n"
-            content .= "; Example: perf_log_path=%USERPROFILE%\AppData\Local\Nuance\PowerScribeOne\Logs\Perf\PSOnePerf.log`n"
-            content .= "perf_log_path=" this.defaults["perf_log_path"] "`n"
+            content .= "; Enable dark mode for settings GUI (true/false)`n"
+            content .= "dark_mode_enabled=" this.defaults["dark_mode_enabled"] "`n"
 
             FileAppend(content, this.configFile, "UTF-8")
         } catch {
@@ -254,9 +253,8 @@ try {
 }
 
 ; ===== ENSURE SHARED DICOM SERVICE =====
-dicomCacheDir := Config.Get("dicom_cache_dir", "")
 try {
-    EnsureDicomService(dicomCacheDir)
+    EnsureDicomService()
 } catch as err {
     Logger.Warning("Failed to ensure DICOM service", {error: err.Message})
 }
@@ -1178,7 +1176,7 @@ try {
     A_TrayMenu.Add("Bruce Helper v" VERSION, (*) => {})
     A_TrayMenu.Disable("Bruce Helper v" VERSION)
     A_TrayMenu.Add()
-    A_TrayMenu.Add("Settings", (*) => ShowSettingsGUI())
+    A_TrayMenu.Add("Settings", (*) => BruceSettingsGui.Show())
     A_TrayMenu.Add("Exit", (*) => ExitApp())
     A_TrayMenu.ClickCount := 1
 
@@ -1211,264 +1209,9 @@ CheckPowerScribeStatus(*) {
     MsgBox status, "Bruce Helper", 0
 }
 
-; ===== SETTINGS GUI =====
-global settingsGui := ""
-global updateStatusText := ""
-global updateAvailableText := ""
-global primaryUpdateBtn := ""
-global cancelUpdateBtn := ""
-global updateState := "check"
-global newestUpdateVersion := ""
-global newestUpdateSHA256 := ""
-
-ShowSettingsGUI(*) {
-    global settingsGui, updateStatusText, updateAvailableText, primaryUpdateBtn, cancelUpdateBtn, updateState
-
-    ; If GUI already exists, just show it
-    if (settingsGui && WinExist("ahk_id " settingsGui.Hwnd)) {
-        settingsGui.Show()
-        return
-    }
-
-    ; Create new GUI with modern styling
-    settingsGui := Gui("+Resize MinSize500x450", "Bruce Helper Settings")
-    settingsGui.SetFont("s10", "Segoe UI")
-    settingsGui.OnEvent("Close", (*) => settingsGui.Hide())
-
-    ; Set custom icon if available
-    try {
-        iconPath := A_ScriptDir . "\helpbruce.ico"
-        if FileExist(iconPath) {
-            settingsGui.Opt("+Icon" . iconPath)
-        }
-    } catch {
-        ; Continue without icon
-    }
-
-    ; Add Tab Control
-    tabs := settingsGui.Add("Tab3", "x10 y10 w530 h400", ["Main", "About"])
-
-    ; ===== MAIN TAB =====
-    tabs.UseTab(1)
-
-    settingsGui.Add("GroupBox", "x20 y50 w510 h120", "Status")
-    settingsGui.Add("Text", "x30 y75 w150", "PowerScribe 360:")
-    ps360Status := WinExist(Constants.POWERSCRIBE_360) ? "✓ Running" : "✗ Not Found"
-    settingsGui.Add("Text", "x180 y75 w260 c" (WinExist(Constants.POWERSCRIBE_360) ? "Green" : "Red"), ps360Status)
-
-    settingsGui.Add("Text", "x30 y100 w150", "PSOne:")
-    psoneStatus := WinExist(Constants.POWERSCRIBE_ONE) ? "✓ Running" : "✗ Not Found"
-    settingsGui.Add("Text", "x180 y100 w260 c" (WinExist(Constants.POWERSCRIBE_ONE) ? "Green" : "Red"), psoneStatus)
-
-    settingsGui.Add("Text", "x30 y125 w150", "Clipboard Monitor:")
-    settingsGui.Add("Text", "x180 y125 w260 cGreen", "✓ Active")
-
-    ; Startup Options
-    settingsGui.Add("GroupBox", "x20 y180 w510 h100", "Startup Options")
-    startupCheckbox := settingsGui.Add("CheckBox", "x30 y205 w480 vStartupEnabled",
-        "Launch Bruce Helper when Windows starts")
-    startupCheckbox.Value := IsStartupEnabled() ? 1 : 0
-
-    updateCheckbox := settingsGui.Add("CheckBox", "x30 y235 w480 vCheckUpdatesOnStartup",
-        "Check for updates when script starts")
-    updateCheckbox.Value := Config.GetBool("check_updates_on_startup", true) ? 1 : 0
-
-    ; ===== ABOUT TAB =====
-    tabs.UseTab(2)
-
-    settingsGui.Add("GroupBox", "x20 y50 w510 h140", "About Bruce Helper")
-    settingsGui.Add("Text", "x30 y75 w490 h25 +Center", "Bruce Helper → PowerScribe Listener")
-    settingsGui.Add("Text", "x30 y100 w490 h25 +Center c888888", "Version " VERSION)
-
-    settingsGui.Add("Text", "x30 y135 w490 h50",
-        "Automatically pastes Bruce radiology reports into PowerScribe when you click 'PS Send' in the Bruce web interface.")
-
-    ; Update Options
-    settingsGui.Add("GroupBox", "x20 y200 w510 h180", "Updates")
-
-    updateStatusText := settingsGui.Add("Text", "x30 y225 w490 h25", "Current version: " VERSION)
-    updateStatusText.SetFont("s10")
-
-    updateAvailableText := settingsGui.Add("Text", "x30 y255 w490 h40 Hidden", "")
-    updateAvailableText.SetFont("s9")
-
-    primaryUpdateBtn := settingsGui.Add("Button", "x30 y305 w150 h40", "Check for Updates")
-    primaryUpdateBtn.OnEvent("Click", (*) => OnPrimaryUpdateClick())
-    primaryUpdateBtn.SetFont("s10")
-
-    cancelUpdateBtn := settingsGui.Add("Button", "x190 y305 w80 h40 Hidden", "Cancel")
-    cancelUpdateBtn.OnEvent("Click", (*) => ResetUpdateUI())
-    cancelUpdateBtn.SetFont("s10")
-
-    updateState := "check"
-
-    ; Reset tab usage
-    tabs.UseTab()
-
-    ; Add Save and Close buttons
-    btnSave := settingsGui.Add("Button", "x380 y420 w70 h30", "Save")
-    btnClose := settingsGui.Add("Button", "x460 y420 w70 h30", "Close")
-
-    btnSave.OnEvent("Click", (*) => SaveSettings())
-    btnClose.OnEvent("Click", (*) => settingsGui.Hide())
-
-    ; Show the GUI
-    settingsGui.Show("w550 h480")
-}
-
-; ===== UPDATE FLOW FUNCTIONS =====
-OnPrimaryUpdateClick() {
-    global updateState
-    if (updateState = "check") {
-        CheckForUpdatesInGUI()
-    } else if (updateState = "install") {
-        InstallUpdate()
-    }
-}
-
-ResetUpdateUI() {
-    global updateState, primaryUpdateBtn, cancelUpdateBtn, updateAvailableText, updateStatusText
-    updateState := "check"
-    primaryUpdateBtn.Text := "Check for Updates"
-    primaryUpdateBtn.Enabled := true
-    cancelUpdateBtn.Visible := false
-    updateAvailableText.Visible := false
-    updateStatusText.Text := "Current version: " VERSION
-    updateStatusText.SetFont("s10")
-}
-
-CheckForUpdatesInGUI() {
-    global updateState, primaryUpdateBtn, cancelUpdateBtn, updateAvailableText, updateStatusText
-    global newestUpdateVersion, newestUpdateSHA256
-
-    try {
-        updateStatusText.Text := "Checking for updates..."
-        updateStatusText.SetFont("s10")
-
-        result := CheckForUpdates(false)  ; false = not silent, but we handle UI ourselves
-
-        if (!result.success) {
-            updateStatusText.Text := "Error: " . result.error
-            updateStatusText.SetFont("s10")
-            NotifyError("Update Check Failed", result.error)
-            return
-        }
-
-        if (!result.updateAvailable) {
-            updateStatusText.Text := "Current version: " VERSION " (latest)"
-            updateStatusText.SetFont("s10")
-            NotifyInfo("Update Check", "You are running the latest version.")
-        } else {
-            updateStatusText.Text := "Current: " VERSION " → Available: " . result.version
-            updateStatusText.SetFont("s10")
-
-            updateAvailableText.Text := "Release: " . result.releaseDate . " - " . result.releaseNotes
-            updateAvailableText.Visible := true
-
-            updateState := "install"
-            primaryUpdateBtn.Text := "Install Update"
-            cancelUpdateBtn.Visible := true
-
-            newestUpdateVersion := result.version
-            newestUpdateSHA256 := result.sha256
-
-            NotifyInfo("Update Available", "Version " . result.version . " found!")
-        }
-
-    } catch as err {
-        updateStatusText.Text := "Error checking for updates"
-        updateStatusText.SetFont("s10")
-        NotifyError("Update Check Failed", err.Message)
-    }
-}
-
-InstallUpdate() {
-    global newestUpdateVersion, newestUpdateSHA256, updateState, primaryUpdateBtn, updateStatusText
-
-    if (newestUpdateVersion = "") {
-        NotifyError("Update Error", "No update version selected")
-        return
-    }
-
-    ; Build version info object
-    versionInfo := Map()
-    versionInfo["sha256"] := newestUpdateSHA256
-
-    result := MsgBox(
-        "Install update v" . newestUpdateVersion . "?`n`n" .
-        "• File will be downloaded and verified (SHA-256)`n" .
-        "• Current version will be backed up`n" .
-        "• Application will restart automatically`n`n" .
-        "Continue?",
-        "Confirm Update Installation",
-        "YesNo Icon?")
-
-    if (result != "Yes") {
-        return
-    }
-
-    try {
-        updateState := "installing"
-        updateStatusText.Text := "Installing update..."
-        updateStatusText.SetFont("s10")
-        primaryUpdateBtn.Text := "Installing..."
-        primaryUpdateBtn.Enabled := false
-
-        PerformUpdate(newestUpdateVersion, versionInfo)
-
-    } catch as err {
-        NotifyError("Update Failed", err.Message)
-        updateState := "install"
-        primaryUpdateBtn.Text := "Install Update"
-        primaryUpdateBtn.Enabled := true
-    }
-}
-
-SaveSettings() {
-    global settingsGui
-
-    try {
-        values := settingsGui.Submit(0)
-
-        ; Handle startup setting
-        currentlyEnabled := IsStartupEnabled()
-        wantsEnabled := values.StartupEnabled
-
-        if (wantsEnabled && !currentlyEnabled) {
-            if (EnableStartup()) {
-                NotifySuccess("Settings Saved", "Startup enabled successfully")
-            } else {
-                NotifyError("Error", "Failed to enable startup")
-                return
-            }
-        } else if (!wantsEnabled && currentlyEnabled) {
-            if (DisableStartup()) {
-                NotifySuccess("Settings Saved", "Startup disabled successfully")
-            } else {
-                NotifyError("Error", "Failed to disable startup")
-                return
-            }
-        } else {
-            NotifySuccess("Settings Saved", "Settings saved successfully")
-        }
-
-        ; Save check updates on startup setting to config.ini
-        checkUpdates := values.CheckUpdatesOnStartup ? "true" : "false"
-        IniWrite(checkUpdates, Config.configFile, "Settings", "check_updates_on_startup")
-
-        ; Save launch on startup setting to config.ini (preserves across updates)
-        launchOnStartup := values.StartupEnabled ? "true" : "false"
-        IniWrite(launchOnStartup, Config.configFile, "Settings", "launch_on_startup")
-
-        ; Reload config to pick up changes
-        Config.Load()
-
-        settingsGui.Hide()
-
-    } catch as err {
-        NotifyError("Error", "Failed to save settings: " err.Message)
-    }
-}
+; ===== SETTINGS GUI (WebView2) =====
+; Old native GUI removed — now handled by BruceSettingsGui class
+; (loaded via #Include lib\gui\BruceSettingsGui.ahk)
 
 ; ===============================================================================
 ; === SHARED INFRASTRUCTURE (Python path, DICOM service, heartbeat) ===
@@ -1497,7 +1240,7 @@ GetPythonPath() {
 ; Ensure the shared DICOM service process is running.
 ; Finds the service script (dev sibling → LOCALAPPDATA), checks if already
 ; running via lock file PID, and launches if needed.
-EnsureDicomService(cacheDir := "") {
+EnsureDicomService() {
     ; Locate dicom_service.py
     serviceScript := ""
 
@@ -1545,7 +1288,7 @@ EnsureDicomService(cacheDir := "") {
         }
     }
 
-    ; Launch the service
+    ; Launch the service (reads its own config.ini for cache dir and other settings)
     pythonPath := GetPythonPath()
     if (pythonPath = "") {
         Logger.Warning("Cannot launch DICOM service — Python not found")
@@ -1553,12 +1296,10 @@ EnsureDicomService(cacheDir := "") {
     }
 
     cmd := '"' . pythonPath . '" "' . serviceScript . '"'
-    if (cacheDir != "")
-        cmd .= ' --cache-dir "' . cacheDir . '"'
 
     try {
         Run(cmd,, "Hide")
-        Logger.Info("DICOM service launched", {script: serviceScript, cache_dir: cacheDir})
+        Logger.Info("DICOM service launched", {script: serviceScript})
     } catch as err {
         Logger.Warning("Failed to launch DICOM service", {error: err.Message})
     }

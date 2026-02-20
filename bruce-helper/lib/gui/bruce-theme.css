@@ -1,0 +1,168 @@
+/* ==============================================
+   Bruce Helper - Color Theme
+   Slate + dark brown + dark orange palette.
+   Loaded after shared theme.css which provides
+   structural tokens.
+   ============================================== */
+
+/* ---- Light Mode ---- */
+:root {
+    color-scheme: light;
+
+    /* Primary (Dark Orange) */
+    --color-primary: #b35518;
+    --color-primary-hover: #964812;
+    --color-primary-light: #fdf0e6;
+    --color-primary-disabled: #d4a07a;
+    --color-primary-text: #ffffff;
+
+    /* Backgrounds */
+    --color-bg: #f0f1f3;
+    --color-bg-card: #ffffff;
+    --color-bg-hint: #f7f7f8;
+
+    /* Text */
+    --color-text: #1c2127;
+    --color-text-secondary: #4a5261;
+    --color-text-muted: #656c7a;
+    --color-text-label: #2e3640;
+
+    /* Borders */
+    --color-border: #dfe1e5;
+    --color-border-light: #eceef0;
+    --color-border-input: #c4c8ce;
+    --color-border-input-hover: #8f959e;
+
+    /* Status */
+    --color-success: #1a7a3a;
+    --color-warning: #b45c08;
+    --color-danger: #c72828;
+
+    /* Titlebar */
+    --color-titlebar: #1c2127;
+    --color-titlebar-text: #e0e2e6;
+    --color-titlebar-btn: #8f959e;
+    --color-titlebar-btn-hover: #f0f1f3;
+    --color-titlebar-btn-hover-bg: rgba(255,255,255,0.1);
+
+    /* Focus */
+    --color-focus: #b35518;
+    --color-focus-ring: rgba(179,85,24,0.3);
+
+    /* Toggle */
+    --color-toggle-off: #9ca3af;
+    --color-toggle-knob: #ffffff;
+    --color-toggle-shadow: rgba(0,0,0,0.15);
+
+    /* Scrollbar */
+    --color-scrollbar-thumb: #c4c8ce;
+    --color-scrollbar-thumb-hover: #8f959e;
+
+    /* Overlay */
+    --color-overlay: rgba(0,0,0,0.45);
+    --color-icon-on-status: #ffffff;
+
+    /* Headings */
+    --color-h1: #b35518;
+    --color-h2: #4a3228;
+    --color-h3: #b35518;
+
+    /* Accent variations */
+    --color-border-accent: #b35518;
+    --color-highlight: #b35518;
+    --color-text-emphasis: var(--color-text);
+    --color-code: #a14517;
+    --color-accent-bg: rgba(179,85,24,0.06);
+    --color-accent-border: rgba(179,85,24,0.2);
+    --color-accent-shadow: rgba(179,85,24,0.1);
+
+    /* Overlay variants */
+    --color-overlay-subtle: rgba(0,0,0,0.04);
+    --color-overlay-faint: rgba(0,0,0,0.02);
+
+    /* Semantic status backgrounds */
+    --color-success-light: rgba(26,122,58,0.08);
+    --color-warning-light: rgba(180,92,8,0.08);
+    --color-danger-light: rgba(199,40,40,0.08);
+}
+
+/* ---- Dark Mode ---- */
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* Primary (Warm Orange) */
+    --color-primary: #e8854a;
+    --color-primary-hover: #f09b66;
+    --color-primary-light: #2e2118;
+    --color-primary-disabled: #a86840;
+    --color-primary-text: #1a1008;
+
+    /* Backgrounds */
+    --color-bg: #191d22;
+    --color-bg-card: #232830;
+    --color-bg-hint: #2c323a;
+
+    /* Text */
+    --color-text: #e4e7ec;
+    --color-text-secondary: #a8aeb8;
+    --color-text-muted: #8b929e;
+    --color-text-label: #c4c9d1;
+
+    /* Borders */
+    --color-border: #2e343c;
+    --color-border-light: #282e36;
+    --color-border-input: #3e4650;
+    --color-border-input-hover: #5e6670;
+
+    /* Status */
+    --color-success: #38d98e;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+
+    /* Titlebar */
+    --color-titlebar: #0e1117;
+    --color-titlebar-text: #e4e7ec;
+    --color-titlebar-btn: #8b929e;
+    --color-titlebar-btn-hover: #e4e7ec;
+    --color-titlebar-btn-hover-bg: rgba(255,255,255,0.08);
+
+    /* Focus */
+    --color-focus: #e8854a;
+    --color-focus-ring: rgba(232,133,74,0.25);
+
+    /* Toggle */
+    --color-toggle-off: #6b7280;
+    --color-toggle-knob: #e4e7ec;
+    --color-toggle-shadow: rgba(0,0,0,0.3);
+
+    /* Scrollbar */
+    --color-scrollbar-thumb: #3e4650;
+    --color-scrollbar-thumb-hover: #5e6670;
+
+    /* Overlay */
+    --color-overlay: rgba(0,0,0,0.55);
+    --color-icon-on-status: #ffffff;
+
+    /* Headings */
+    --color-h1: #e8854a;
+    --color-h2: #c9a48e;
+    --color-h3: #e8854a;
+
+    /* Accent variations */
+    --color-border-accent: #e8854a;
+    --color-highlight: #e8854a;
+    --color-text-emphasis: var(--color-text);
+    --color-code: #f09b66;
+    --color-accent-bg: rgba(232,133,74,0.08);
+    --color-accent-border: rgba(232,133,74,0.25);
+    --color-accent-shadow: rgba(232,133,74,0.15);
+
+    /* Overlay variants */
+    --color-overlay-subtle: rgba(0,0,0,0.2);
+    --color-overlay-faint: rgba(255,255,255,0.03);
+
+    /* Semantic status backgrounds */
+    --color-success-light: rgba(56,217,142,0.1);
+    --color-warning-light: rgba(251,191,36,0.1);
+    --color-danger-light: rgba(248,113,113,0.1);
+}

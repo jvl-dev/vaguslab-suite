@@ -1,36 +1,13 @@
 /* ==============================================
-   Report Check - Shared Theme System
-   Single source of truth for all color tokens.
-   Dark mode: set data-theme="dark" on <html>.
-
-   IMPORTANT: Color Usage Guidelines
-   ----------------------------------
-   1. NEVER use hardcoded color values (hex/rgb) in HTML/CSS
-   2. ALWAYS use CSS variables (var(--color-*))
-   3. All colors meet WCAG AA contrast standards (4.5:1 for text, 3:1 for UI)
-   4. To change theme colors, edit ONLY this file
-
-   Color Token Usage:
-   - --color-text:           Primary body text (highest contrast)
-   - --color-text-label:     Form labels, headings (high contrast)
-   - --color-text-secondary: Secondary info, descriptions (medium contrast)
-   - --color-text-muted:     Hints, disabled text (low contrast, large text only)
-   - --color-primary:        Links, active states, brand color
-   - --color-primary-hover:  Interactive hover states
-
+   Report Check - Color Theme
+   Seafoam teal palette. Loaded after shared
+   theme.css which provides structural tokens.
    ============================================== */
 
-/* Inter Font (bundled) */
-@font-face {
-    font-family: 'Inter';
-    src: url('fonts/InterVariable.woff2') format('woff2');
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
-}
-
-/* ---- Light Theme (default) ---- */
+/* ---- Light Theme ---- */
 :root {
+    color-scheme: light;
+
     /* Primary (Seafoam Teal) - WCAG AA compliant on light backgrounds */
     --color-primary: #2a9d8f;           /* Teal 600 - 4.52:1 on white */
     --color-primary-hover: #21867a;     /* Teal 700 - darker for hover */
@@ -45,8 +22,8 @@
 
     /* Text - All meet WCAG AA (4.5:1+) on white backgrounds */
     --color-text: #1e293b;              /* Primary text - 13.13:1 */
-    --color-text-secondary: #64748b;    /* Secondary text - 4.88:1 */
-    --color-text-muted: #94a3b8;        /* Muted text - 3.24:1 (large text only) */
+    --color-text-secondary: #475569;    /* Secondary text - 7.09:1 */
+    --color-text-muted: #6b7280;        /* Muted text - 5.27:1 (AA at all sizes) */
     --color-text-label: #334155;        /* Labels - 8.49:1 */
 
     /* Borders */
@@ -69,10 +46,10 @@
 
     /* Focus */
     --color-focus: #2a9d8f;
-    --color-focus-ring: rgba(42,157,143,0.15);
+    --color-focus-ring: rgba(42,157,143,0.3);
 
     /* Toggle */
-    --color-toggle-off: #cbd5e1;
+    --color-toggle-off: #9ca3af;        /* ~3.2:1 for UI elements */
     --color-toggle-knob: #ffffff;
     --color-toggle-shadow: rgba(0,0,0,0.15);
 
@@ -80,42 +57,44 @@
     --color-scrollbar-thumb: #cbd5e1;
     --color-scrollbar-thumb-hover: #94a3b8;
 
-    /* Layout tokens */
-    --radius: 8px;
-    --radius-sm: 6px;
-    --transition: 0.15s ease;
-
-    /* Spacing scale */
-    --space-xxs: 4px;
-    --space-xs: 8px;
-    --space-sm: 12px;
-    --space-md: 16px;
-    --space-lg: 20px;
-    --space-xl: 24px;
-
-    /* Typography scale */
-    --font-family-base: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    --font-family-mono: 'Consolas', 'Monaco', monospace;
-    --font-size-xs: 12px;
-    --font-size-sm: 13px;
-    --font-size-md: 14px;
-    --font-size-lg: 16px;
-    --line-height-snug: 1.4;
-    --line-height-normal: 1.5;
-    --line-height-relaxed: 1.6;
-
-    /* Shadows */
-    --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
-    --shadow-elevated: 0 8px 32px rgba(0,0,0,0.2);
-    --shadow-segmented: 0 1px 3px rgba(0,0,0,0.1);
-
     /* Overlay */
     --color-overlay: rgba(0,0,0,0.45);
     --color-icon-on-status: #ffffff;
+
+    /* Heading colors (teal-derived) */
+    --color-h1: var(--color-primary);
+    --color-h2: #1a7a6e;               /* Deep teal - ~5.8:1 */
+    --color-h3: var(--color-primary);
+
+    /* Accent variations */
+    --color-border-accent: var(--color-primary);
+    --color-highlight: var(--color-primary);
+    --color-text-emphasis: var(--color-text);
+    --color-code: #d63384;
+    --color-accent-bg: rgba(42,157,143,0.06);
+    --color-accent-border: rgba(42,157,143,0.2);
+    --color-accent-shadow: rgba(42,157,143,0.1);
+
+    /* Overlay variants */
+    --color-overlay-subtle: rgba(0,0,0,0.04);
+    --color-overlay-faint: rgba(0,0,0,0.02);
+
+    /* Targeted review panel */
+    --color-targeted-bg: #faf6f4;
+    --color-targeted-border: #c9927a;
+    --color-targeted-header: #a0725a;
+    --color-targeted-number: #b87a5e;
+
+    /* Semantic status backgrounds */
+    --color-success-light: rgba(5,150,105,0.08);
+    --color-warning-light: rgba(217,119,6,0.08);
+    --color-danger-light: rgba(220,38,38,0.08);
 }
 
 /* ---- Dark Theme (Charcoal + Seafoam) ---- */
 [data-theme="dark"] {
+    color-scheme: dark;
+
     /* Primary (Seafoam Teal) - WCAG AA compliant on dark backgrounds */
     --color-primary: #5eb3a8;           /* Teal 400 - 7.84:1 on #161b22 */
     --color-primary-hover: #7dc9be;     /* Teal 300 - lighter for hover */
@@ -130,8 +109,8 @@
 
     /* Text - All meet WCAG AA (4.5:1+) on card backgrounds */
     --color-text: #e6edf3;              /* Primary text - 12.63:1 */
-    --color-text-secondary: #adbac7;    /* Secondary text - 7.35:1 (improved) */
-    --color-text-muted: #8b949e;        /* Muted text - 4.58:1 (improved) */
+    --color-text-secondary: #adbac7;    /* Secondary text - 7.35:1 */
+    --color-text-muted: #8b949e;        /* Muted text - 4.58:1 */
     --color-text-label: #c9d1d9;        /* Labels - 9.75:1 */
 
     /* Borders */
@@ -157,7 +136,7 @@
     --color-focus-ring: rgba(94,179,168,0.2);
 
     /* Toggle */
-    --color-toggle-off: #444c56;
+    --color-toggle-off: #6b7280;
     --color-toggle-knob: #e6edf3;
     --color-toggle-shadow: rgba(0,0,0,0.3);
 
@@ -165,13 +144,36 @@
     --color-scrollbar-thumb: #444c56;
     --color-scrollbar-thumb-hover: #6e7681;
 
-    /* Cards & Surfaces */
-    --shadow-card: 0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
-    --shadow-elevated: 0 8px 32px rgba(0,0,0,0.45);
-    --shadow-segmented: 0 1px 3px rgba(0,0,0,0.25);
-
     /* Overlay */
     --color-overlay: rgba(0,0,0,0.55);
     --color-icon-on-status: #ffffff;
 
+    /* Heading colors (teal-derived) */
+    --color-h1: var(--color-primary);
+    --color-h2: #6ec4b9;
+    --color-h3: var(--color-primary);
+
+    /* Accent variations */
+    --color-border-accent: var(--color-primary);
+    --color-highlight: var(--color-primary);
+    --color-text-emphasis: var(--color-text);
+    --color-code: #ff6b9d;
+    --color-accent-bg: rgba(94,179,168,0.08);
+    --color-accent-border: rgba(94,179,168,0.25);
+    --color-accent-shadow: rgba(94,179,168,0.15);
+
+    /* Overlay variants */
+    --color-overlay-subtle: rgba(0,0,0,0.2);
+    --color-overlay-faint: rgba(255,255,255,0.03);
+
+    /* Targeted review panel */
+    --color-targeted-bg: #2d3235;
+    --color-targeted-border: #c9927a;
+    --color-targeted-header: #c9927a;
+    --color-targeted-number: #daa892;
+
+    /* Semantic status backgrounds */
+    --color-success-light: rgba(52,211,153,0.1);
+    --color-warning-light: rgba(251,191,36,0.1);
+    --color-danger-light: rgba(248,113,113,0.1);
 }

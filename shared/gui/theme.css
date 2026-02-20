@@ -1,0 +1,78 @@
+/* ==============================================
+   Vaguslab - Shared Theme Structure
+   Structural tokens shared by all apps.
+   Colors are defined in each app's own theme file:
+     report-check/lib/gui/rc-theme.css
+     bruce-helper/lib/gui/bruce-theme.css
+
+   IMPORTANT: Color Usage Guidelines
+   ----------------------------------
+   1. NEVER use hardcoded color values (hex/rgb) in HTML/CSS
+   2. ALWAYS use CSS variables (var(--color-*))
+   3. All colors meet WCAG AA contrast standards (4.5:1 for text, 3:1 for UI)
+   4. To change app colors, edit the app-specific theme file
+
+   ============================================== */
+
+/* Inter Font (bundled) */
+@font-face {
+    font-family: 'Inter';
+    src: url('fonts/InterVariable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ---- Structural Tokens (light defaults) ---- */
+:root {
+    /* Layout */
+    --radius: 8px;
+    --radius-sm: 6px;
+    --transition: 0.15s ease;
+
+    /* Spacing scale */
+    --space-xxs: 4px;
+    --space-xs: 8px;
+    --space-sm: 12px;
+    --space-md: 16px;
+    --space-lg: 20px;
+    --space-xl: 24px;
+
+    /* Typography scale */
+    --font-family-base: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-family-mono: 'Consolas', 'Monaco', monospace;
+    --font-size-xs: 12px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 16px;
+    --line-height-snug: 1.4;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.6;
+
+    /* Shadows (light) */
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-elevated: 0 8px 32px rgba(0,0,0,0.2);
+    --shadow-segmented: 0 1px 3px rgba(0,0,0,0.1);
+
+    /* Content typography (used by review templates) */
+    --font-size-base: 15px;
+    --line-height-base: 1.6;
+    --line-height-tight: 1.4;
+    --border-radius: var(--radius-sm);
+
+    /* Content spacing (used by review templates) */
+    --spacing-xxs: 4px;
+    --spacing-xs: 8px;
+    --spacing-sm: 12px;
+    --spacing-md: 20px;
+    --spacing-lg: 30px;
+    --spacing-xl: 40px;
+}
+
+/* ---- Structural Tokens (dark overrides) ---- */
+[data-theme="dark"] {
+    /* Shadows need more depth on dark backgrounds */
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-elevated: 0 8px 32px rgba(0,0,0,0.45);
+    --shadow-segmented: 0 1px 3px rgba(0,0,0,0.25);
+}

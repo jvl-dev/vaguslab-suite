@@ -65,10 +65,10 @@ global VERSION := "0.30.2"
 #Include lib\PromptCache.ahk
 ; #Include lib\APIManager.ahk  ; MIGRATED TO PYTHON: api_handler.py
 #Include lib\APIRateLimiter.ahk
-#Include lib\vendor\ComVar.ahk
-#Include lib\vendor\Promise.ahk
-#Include lib\vendor\WebView2.ahk
-#Include lib\vendor\WebViewToo.ahk
+#Include ..\shared\vendor\ComVar.ahk
+#Include ..\shared\vendor\Promise.ahk
+#Include ..\shared\vendor\WebView2.ahk
+#Include ..\shared\vendor\WebViewToo.ahk
 #Include lib\ConfigBuilder.ahk
 #Include lib\SettingsValidator.ahk
 #Include lib\SettingsPresenter.ahk
@@ -127,8 +127,7 @@ _dicomEnabled := ConfigManager.config["Beta"].Get("demographic_extraction_enable
 Logger.Info("DICOM service check", {demographic_extraction_enabled: _dicomEnabled})
 if (_dicomEnabled) {
     try {
-        cacheDir := ConfigManager.config["Beta"].Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT)
-        EnsureDicomService(cacheDir)
+        EnsureDicomService()
     } catch as err {
         Logger.Warning("Failed to ensure DICOM service", {error: err.Message})
         ; Non-fatal - targeted review will work without real-time monitoring
@@ -699,7 +698,7 @@ ActivatePowerScribeWindow() {
 ; Ensure the shared DICOM service process is running.
 ; Finds the service script (dev sibling → LOCALAPPDATA), checks if already
 ; running via lock file PID, and launches if needed.
-EnsureDicomService(cacheDir := "") {
+EnsureDicomService() {
     ; Locate dicom_service.py
     serviceScript := ""
 
@@ -747,7 +746,7 @@ EnsureDicomService(cacheDir := "") {
         }
     }
 
-    ; Launch the service
+    ; Launch the service (reads its own config.ini for cache dir and other settings)
     pythonPath := GetPythonPath()
     if (pythonPath = "") {
         Logger.Warning("Cannot launch DICOM service — Python not found")
@@ -755,12 +754,10 @@ EnsureDicomService(cacheDir := "") {
     }
 
     cmd := '"' . pythonPath . '" "' . serviceScript . '"'
-    if (cacheDir != "")
-        cmd .= ' --cache-dir "' . cacheDir . '"'
 
     try {
         Run(cmd,, "Hide")
-        Logger.Info("DICOM service launched", {script: serviceScript, cache_dir: cacheDir})
+        Logger.Info("DICOM service launched", {script: serviceScript})
     } catch as err {
         Logger.Warning("Failed to launch DICOM service", {error: err.Message})
     }
@@ -969,6 +966,7 @@ ReviewRadiologyReport(modeOverride := "") {
                  . ',"config_path":"' . StrReplace(ConfigManager.configFile, "\", "\\") . '"'
                  . ',"stream_file":"' . StrReplace(streamFile, "\", "\\") . '"'
                  . ',"status_file":"' . StrReplace(statusFile, "\", "\\") . '"'
+                 . ',"version":"' . VERSION . '"'
                  . '}'
         FileAppend(request, requestFile, "UTF-8-RAW")
 

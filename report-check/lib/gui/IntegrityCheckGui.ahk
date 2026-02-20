@@ -23,7 +23,8 @@ class IntegrityCheckGui {
 
         isDark := ConfigManager.config.Has("Settings") && ConfigManager.config["Settings"].Has("dark_mode_enabled")
             ? !!ConfigManager.config["Settings"]["dark_mode_enabled"] : true
-        htmlPath := "file:///" StrReplace(A_ScriptDir "\lib\gui\integrity-check.html", "\", "/") "?theme=" (isDark ? "dark" : "light")
+        sharedDir := "file:///" StrReplace(A_ScriptDir "\..\shared\gui", "\", "/")
+        htmlPath := "file:///" StrReplace(A_ScriptDir "\lib\gui\integrity-check.html", "\", "/") "?theme=" (isDark ? "dark" : "light") "&shared=" sharedDir
         this.wvGui.Navigate(htmlPath)
 
         this.wvGui.AddCallbackToScript("CloseWindow", ObjBindMethod(this, "_Close"))

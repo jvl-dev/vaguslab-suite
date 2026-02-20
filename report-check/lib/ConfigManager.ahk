@@ -97,8 +97,7 @@ class ConfigManager {
                 beta: {
                     demographic_extraction_enabled: false,
                     mode_override_hotkeys: false,
-                    powerscribe_autoselect: false,
-                    dicom_cache_directory: Constants.DICOM_CACHE_DEFAULT
+                    powerscribe_autoselect: false
                 }
             }
 
@@ -233,10 +232,6 @@ class ConfigManager {
             demographicExtractionEnabled := this._ParseJSONBoolean(this._ExtractJSONValue(jsonContent, "demographic_extraction_enabled"))
             modeOverrideHotkeys := this._ParseJSONBoolean(this._ExtractJSONValue(jsonContent, "mode_override_hotkeys"))
             powerscribeAutoselect := this._ParseJSONBoolean(this._ExtractJSONValue(jsonContent, "powerscribe_autoselect"))
-            dicomCacheDirectory := this._ExtractJSONValue(jsonContent, "dicom_cache_directory")
-            if (dicomCacheDirectory = "") {
-                dicomCacheDirectory := Constants.DICOM_CACHE_DEFAULT
-            }
 
             this.config["Settings"] := Map(
                 "comprehensive_claude_model", comprehensiveClaudeModel != "" ? comprehensiveClaudeModel : Constants.GetDefaultModel("claude", "comprehensive"),
@@ -256,8 +251,7 @@ class ConfigManager {
             this.config["Beta"] := Map(
                 "demographic_extraction_enabled", demographicExtractionEnabled,
                 "mode_override_hotkeys", modeOverrideHotkeys,
-                "powerscribe_autoselect", powerscribeAutoselect,
-                "dicom_cache_directory", dicomCacheDirectory
+                "powerscribe_autoselect", powerscribeAutoselect
             )
 
             ; Validate loaded configuration and fix any issues
@@ -354,8 +348,7 @@ class ConfigManager {
                 beta: {
                     demographic_extraction_enabled: beta.Get("demographic_extraction_enabled", false),
                     mode_override_hotkeys: beta.Get("mode_override_hotkeys", false),
-                    powerscribe_autoselect: beta.Get("powerscribe_autoselect", false),
-                    dicom_cache_directory: beta.Get("dicom_cache_directory", Constants.DICOM_CACHE_DEFAULT)
+                    powerscribe_autoselect: beta.Get("powerscribe_autoselect", false)
                 }
             }
 
@@ -487,7 +480,8 @@ class ConfigManager {
 
             isDark := this.config.Has("Settings") && this.config["Settings"].Has("dark_mode_enabled")
                 ? !!this.config["Settings"]["dark_mode_enabled"] : true
-            htmlPath := "file:///" StrReplace(A_ScriptDir "\lib\gui\setup.html", "\", "/") "?theme=" (isDark ? "dark" : "light")
+            sharedDir := "file:///" StrReplace(A_ScriptDir "\..\shared\gui", "\", "/")
+            htmlPath := "file:///" StrReplace(A_ScriptDir "\lib\gui\setup.html", "\", "/") "?theme=" (isDark ? "dark" : "light") "&shared=" sharedDir
 
             this._setupGui := WebViewGui("+AlwaysOnTop -Caption",,, {})
             this._setupGui.OnEvent("Close", (*) => this._OnSetupClose())
@@ -1254,19 +1248,6 @@ class ConfigManager {
         if (provider != "claude" && provider != "gemini" && provider != "openai") {
             Logger.Warning("Invalid provider value, resetting to default", {value: provider})
             this.config["API"]["provider"] := "claude"
-            fixed := true
-        }
-
-        ; Fix over-escaped DICOM cache directory (caused by prior auto-save bug)
-        beta := this.config["Beta"]
-        dicomDir := beta.Get("dicom_cache_directory", "")
-        if (dicomDir != "" && InStr(dicomDir, "\\")) {
-            ; Collapse any runs of multiple backslashes down to single backslashes
-            while (InStr(dicomDir, "\\")) {
-                dicomDir := StrReplace(dicomDir, "\\", "\")
-            }
-            beta["dicom_cache_directory"] := dicomDir
-            Logger.Warning("Fixed over-escaped DICOM cache directory path")
             fixed := true
         }
 

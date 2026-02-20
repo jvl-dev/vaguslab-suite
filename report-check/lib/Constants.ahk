@@ -103,8 +103,6 @@ class Constants {
 
     static MAX_REVIEW_FILES_DEFAULT := 10    ; Default max files for review history
     static CONFIG_ENCODING := "UTF-8"        ; Configuration file encoding
-    static DICOM_CACHE_DEFAULT := "C:\Intelerad\InteleViewerDicom"  ; Default DICOM cache directory
-    static PSONE_PERF_LOG_SUBPATH := "\AppData\Local\Nuance\PowerScribeOne\Logs\Perf\PSOnePerf.log"  ; Relative to USERPROFILE
 
     ; ==============================================
     ; Update System

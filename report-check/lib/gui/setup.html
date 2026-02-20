@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="components.css">
 <script>
-// Apply theme immediately (before paint) to prevent light→dark flash
+// Apply theme + load shared CSS immediately (before paint) to prevent FOUC
 (function() {
-    var m = location.search.match(/[?&]theme=(dark|light)/);
-    if (m) document.documentElement.dataset.theme = m[1];
+    var p = new URLSearchParams(location.search);
+    if (p.get('theme')) document.documentElement.dataset.theme = p.get('theme');
+    var s = p.get('shared') || '.';
+    document.write('<link rel="stylesheet" href="' + s + '/theme.css">');
+    document.write('<link rel="stylesheet" href="' + s + '/components.css">');
+    document.write('<link rel="stylesheet" href="rc-theme.css">');
 })();
 </script>
 <style>
@@ -39,8 +41,8 @@ body {
     display: none;
 }
 .api-status.info { background: var(--color-primary-light); color: var(--color-primary); }
-.api-status.success { background: var(--color-success-bg); color: var(--color-success); }
-.api-status.error { background: var(--color-danger-bg); color: var(--color-danger); }
+.api-status.success { background: var(--color-success-light); color: var(--color-success); }
+.api-status.error { background: var(--color-danger-light); color: var(--color-danger); }
 .footer {
     display: flex;
     align-items: center;

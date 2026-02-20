@@ -116,13 +116,6 @@ class ConfigBuilder {
         ; Demographic extraction (parent feature)
         beta["demographic_extraction_enabled"] := this._ParseBool(formData.Get("DemographicExtractionEnabled", false))
 
-        ; DICOM cache directory (child of demographic extraction)
-        dicomDir := formData.Get("DicomCacheDirectory", "")
-        if (dicomDir = "" || dicomDir = "Default directory") {
-            dicomDir := Constants.DICOM_CACHE_DEFAULT
-        }
-        beta["dicom_cache_directory"] := dicomDir
-
         return beta
     }
 

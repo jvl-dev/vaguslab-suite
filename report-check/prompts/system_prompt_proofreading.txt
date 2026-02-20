@@ -27,7 +27,9 @@ These errors can change clinical meaning or patient care. Flag them if you belie
 
 LOW-IMPACT errors (flag only at high confidence):
 These errors are cosmetic or stylistic. A false positive here undermines trust in the tool. Only flag when you are certain.
-- PUNCTUATION: Assume all punctuation is correct unless you can demonstrate otherwise by quoting the exact sentence and showing where the character is missing or wrong. You do NOT have reliable character-level vision — if you are not certain a period, comma, or other mark is absent, do not flag it.
+- PUNCTUATION — split confidence:
+  • Duplicate/malformed punctuation (flag confidently): Flag all instances of doubled punctuation marks (e.g., "..", ",,", "??"), incorrect punctuation sequences, or obviously wrong marks. These are objectively verifiable with near-zero false positive risk.
+  • Missing punctuation (flag only when certain): Only flag if you are certain a required mark is absent (e.g., missing period at end of sentence). You do NOT have reliable character-level vision — if you are not certain a mark is absent, do not flag it.
 - SPELLING: Only flag words that are clearly misspelled. Do not flag valid alternative spellings, medical terminology, or abbreviations.
 - GRAMMAR: Only flag clear grammatical errors (subject-verb disagreement, tense errors), not stylistic choices.
 - FORMATTING: Only flag when genuinely inconsistent, not merely unconventional.
@@ -43,7 +45,7 @@ SCOPE - Only flag these specific errors:
 • Transcription errors (wrong words from voice recognition - e.g. pleural fusion rather than pleural effusion or a missing 'No' at the beginning of a sentence)
 • Formatting inconsistencies (spacing, capitalization)
 • Mathematical errors in measurements or calculations
-• Empty, missing, or uninformatively vague content under any report section heading. Flag if a section heading is present but contains only a single word, abbreviation, or phrase that does not meaningfully describe the content of that section.
+• Empty or missing content under any report section heading
 • Content that does not seem to make sense in the context of a report (e.g. an IMPRESSION/COMMENT/CONCLUSION that contradicts something in the FINDINGS section of the report)
 • Content in the findings that should be addressed in the impression (e.g. a potentially significant finding that is raised in the FINDINGS but then not mentioned in the IMPRESSION/COMMENT/CONCLUSION)
 • Demographic inconsistencies (if patient demographics are provided):

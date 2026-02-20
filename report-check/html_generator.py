@@ -308,7 +308,7 @@ def _build_targeted_review_html(areas, user_message="", demographics_label=""):
             '<div class="report-section targeted-review-section">\n'
             '    <div class="collapsible-header" onclick="toggleCollapse(this)">\n'
             '        <h2 class="targeted-review-header">Targeted Review Suggestions</h2>\n'
-            '        <span class="collapse-icon">\u25b6</span>\n'
+            '        <span class="collapse-icon"></span>\n'
             "    </div>\n"
             '    <div class="collapsible-content collapsed">\n'
             '        <div class="targeted-review-content">\n'
@@ -331,7 +331,7 @@ def _build_targeted_review_html(areas, user_message="", demographics_label=""):
         '    <div class="collapsible-header" onclick="toggleCollapse(this)">',
         '        <h2 class="targeted-review-header">Targeted Review Suggestions</h2>',
         f"        {demo_span}",
-        '        <span class="collapse-icon">\u25b6</span>',
+        '        <span class="collapse-icon"></span>',
         "    </div>",
         '    <div class="collapsible-content collapsed">',
         '        <div class="targeted-review-content">',

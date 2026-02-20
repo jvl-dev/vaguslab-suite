@@ -1,83 +1,84 @@
 /* ==============================================
    Report Check - Color Theme
-   Seafoam teal palette. Loaded after shared
-   theme.css which provides structural tokens.
+   Muted seafoam palette with teal-infused neutrals.
+   Loaded after shared theme.css which provides
+   structural tokens.
    ============================================== */
 
 /* ---- Light Theme ---- */
 :root {
     color-scheme: light;
 
-    /* Primary (Seafoam Teal) - WCAG AA compliant on light backgrounds */
-    --color-primary: #2a9d8f;           /* Teal 600 - 4.52:1 on white */
-    --color-primary-hover: #21867a;     /* Teal 700 - darker for hover */
-    --color-primary-light: #e6f7f5;     /* Teal 50 - light bg */
-    --color-primary-disabled: #80cbc4;  /* Teal 300 - muted */
-    --color-primary-text: #ffffff;      /* White text on primary */
+    /* Primary (Muted Seafoam) — cooler, less Material Design */
+    --color-primary: #2e8e82;
+    --color-primary-hover: #24766c;
+    --color-primary-light: #e4f4f1;
+    --color-primary-disabled: #7ebeb6;
+    --color-primary-text: #ffffff;
 
-    /* Backgrounds */
-    --color-bg: #f1f5f9;                /* Slate 100 */
-    --color-bg-card: #ffffff;           /* White cards */
-    --color-bg-hint: #f8fafc;           /* Slate 50 */
+    /* Backgrounds — faint teal wash throughout */
+    --color-bg: #edf1f0;
+    --color-bg-card: #f9fbfa;
+    --color-bg-hint: #f3f6f5;
 
-    /* Text - All meet WCAG AA (4.5:1+) on white backgrounds */
-    --color-text: #1e293b;              /* Primary text - 13.13:1 */
-    --color-text-secondary: #475569;    /* Secondary text - 7.09:1 */
-    --color-text-muted: #6b7280;        /* Muted text - 5.27:1 (AA at all sizes) */
-    --color-text-label: #334155;        /* Labels - 8.49:1 */
+    /* Text — deep teal-ink, not stock slate */
+    --color-text: #1a2c2a;
+    --color-text-secondary: #465c58;
+    --color-text-muted: #647872;
+    --color-text-label: #2e423e;
 
-    /* Borders */
-    --color-border: #e2e8f0;
-    --color-border-light: #f1f5f9;
-    --color-border-input: #cbd5e1;
-    --color-border-input-hover: #94a3b8;
+    /* Borders — cool teal-gray */
+    --color-border: #d4ddd9;
+    --color-border-light: #e6ece9;
+    --color-border-input: #b8c8c4;
+    --color-border-input-hover: #8a9e98;
 
     /* Status */
-    --color-success: #059669;
-    --color-warning: #d97706;
-    --color-danger: #dc2626;
+    --color-success: #1a8252;
+    --color-warning: #c07a10;
+    --color-danger: #c42e2e;
 
-    /* Titlebar */
-    --color-titlebar: #0f172a;
-    --color-titlebar-text: #e2e8f0;
-    --color-titlebar-btn: #94a3b8;
-    --color-titlebar-btn-hover: #f1f5f9;
+    /* Titlebar — deep teal-charcoal */
+    --color-titlebar: #142422;
+    --color-titlebar-text: #c0d0cc;
+    --color-titlebar-btn: #7a908a;
+    --color-titlebar-btn-hover: #e4ece9;
     --color-titlebar-btn-hover-bg: rgba(255,255,255,0.1);
 
     /* Focus */
-    --color-focus: #2a9d8f;
-    --color-focus-ring: rgba(42,157,143,0.3);
+    --color-focus: #2e8e82;
+    --color-focus-ring: rgba(46,142,130,0.28);
 
     /* Toggle */
-    --color-toggle-off: #9ca3af;        /* ~3.2:1 for UI elements */
+    --color-toggle-off: #9aaba6;
     --color-toggle-knob: #ffffff;
-    --color-toggle-shadow: rgba(0,0,0,0.15);
+    --color-toggle-shadow: rgba(20,36,34,0.1);
 
     /* Scrollbar */
-    --color-scrollbar-thumb: #cbd5e1;
-    --color-scrollbar-thumb-hover: #94a3b8;
+    --color-scrollbar-thumb: #b8c8c4;
+    --color-scrollbar-thumb-hover: #8a9e98;
 
     /* Overlay */
-    --color-overlay: rgba(0,0,0,0.45);
+    --color-overlay: rgba(20,36,34,0.45);
     --color-icon-on-status: #ffffff;
 
-    /* Heading colors (teal-derived) */
-    --color-h1: var(--color-primary);
-    --color-h2: #1a7a6e;               /* Deep teal - ~5.8:1 */
-    --color-h3: var(--color-primary);
+    /* Heading colors — teal-derived */
+    --color-h1: #2e8e82;
+    --color-h2: #1c6e62;
+    --color-h3: #2e8e82;
 
     /* Accent variations */
-    --color-border-accent: var(--color-primary);
-    --color-highlight: var(--color-primary);
+    --color-border-accent: #2e8e82;
+    --color-highlight: #2e8e82;
     --color-text-emphasis: var(--color-text);
-    --color-code: #d63384;
-    --color-accent-bg: rgba(42,157,143,0.06);
-    --color-accent-border: rgba(42,157,143,0.2);
-    --color-accent-shadow: rgba(42,157,143,0.1);
+    --color-code: #8a5c3a;
+    --color-accent-bg: rgba(46,142,130,0.06);
+    --color-accent-border: rgba(46,142,130,0.18);
+    --color-accent-shadow: rgba(46,142,130,0.08);
 
     /* Overlay variants */
-    --color-overlay-subtle: rgba(0,0,0,0.04);
-    --color-overlay-faint: rgba(0,0,0,0.02);
+    --color-overlay-subtle: rgba(20,36,34,0.04);
+    --color-overlay-faint: rgba(20,36,34,0.02);
 
     /* Targeted review panel */
     --color-targeted-bg: #faf6f4;
@@ -86,94 +87,122 @@
     --color-targeted-number: #b87a5e;
 
     /* Semantic status backgrounds */
-    --color-success-light: rgba(5,150,105,0.08);
-    --color-warning-light: rgba(217,119,6,0.08);
-    --color-danger-light: rgba(220,38,38,0.08);
+    --color-success-light: rgba(26,130,82,0.07);
+    --color-warning-light: rgba(192,122,16,0.07);
+    --color-danger-light: rgba(196,46,46,0.07);
+
+    /* Sidebar — teal-tinted parchment */
+    --color-bg-sidebar: #e2e9e6;
+    --color-border-sidebar: #d0dad6;
+    --color-sidebar-active-bg: rgba(46, 142, 130, 0.1);
+    --color-sidebar-active-border: var(--color-primary);
+    --color-sidebar-hover-bg: rgba(46, 142, 130, 0.05);
+
+    /* Dot-grid texture */
+    --color-bg-dot: rgba(46, 142, 130, 0.035);
+
+    /* Shadows — teal-tinted, not pure black */
+    --shadow-elevated: 0 8px 24px rgba(20,36,34,0.12), 0 2px 8px rgba(20,36,34,0.08);
+    --shadow-segmented: 0 1px 3px rgba(20,36,34,0.08);
 }
 
-/* ---- Dark Theme (Charcoal + Seafoam) ---- */
+/* ---- Dark Theme (Deep Teal-Charcoal) ---- */
 [data-theme="dark"] {
     color-scheme: dark;
 
-    /* Primary (Seafoam Teal) - WCAG AA compliant on dark backgrounds */
-    --color-primary: #5eb3a8;           /* Teal 400 - 7.84:1 on #161b22 */
-    --color-primary-hover: #7dc9be;     /* Teal 300 - lighter for hover */
-    --color-primary-light: #0f2e2a;     /* Teal 900 - darker bg for contrast */
-    --color-primary-disabled: #4db6ac;  /* Teal 500 - muted but visible */
-    --color-primary-text: #0f1f1d;      /* Very dark teal for text on primary */
+    /* Primary (Lifted Seafoam) */
+    --color-primary: #60b0a4;
+    --color-primary-hover: #78c2b8;
+    --color-primary-light: #122c28;
+    --color-primary-disabled: #4a9488;
+    --color-primary-text: #0c1e1a;
 
-    /* Backgrounds */
-    --color-bg: #161b22;                /* GitHub dark bg */
-    --color-bg-card: #21272e;           /* Slightly lighter for cards */
-    --color-bg-hint: #2a3038;           /* Subtle hint backgrounds */
+    /* Backgrounds — deep teal-charcoal, not GitHub stock */
+    --color-bg: #111a1e;
+    --color-bg-card: #1a2628;
+    --color-bg-hint: #223032;
 
-    /* Text - All meet WCAG AA (4.5:1+) on card backgrounds */
-    --color-text: #e6edf3;              /* Primary text - 12.63:1 */
-    --color-text-secondary: #adbac7;    /* Secondary text - 7.35:1 */
-    --color-text-muted: #8b949e;        /* Muted text - 4.58:1 */
-    --color-text-label: #c9d1d9;        /* Labels - 9.75:1 */
+    /* Text — cool off-white with teal undertone */
+    --color-text: #dce6e4;
+    --color-text-secondary: #9aaea8;
+    --color-text-muted: #6e8480;
+    --color-text-label: #bcccc8;
 
-    /* Borders */
-    --color-border: #30363d;
-    --color-border-light: #2d333b;
-    --color-border-input: #444c56;
-    --color-border-input-hover: #6e7681;
+    /* Borders — dark teal-gray */
+    --color-border: #283836;
+    --color-border-light: #22302e;
+    --color-border-input: #384c48;
+    --color-border-input-hover: #526864;
 
     /* Status */
-    --color-success: #34d399;
-    --color-warning: #fbbf24;
-    --color-danger: #f87171;
+    --color-success: #48d898;
+    --color-warning: #f0b830;
+    --color-danger: #f07070;
 
-    /* Titlebar */
-    --color-titlebar: #0d1117;
-    --color-titlebar-text: #e6edf3;
-    --color-titlebar-btn: #8b949e;
-    --color-titlebar-btn-hover: #e6edf3;
+    /* Titlebar — near-black with teal cast */
+    --color-titlebar: #0a1416;
+    --color-titlebar-text: #dce6e4;
+    --color-titlebar-btn: #6e8480;
+    --color-titlebar-btn-hover: #dce6e4;
     --color-titlebar-btn-hover-bg: rgba(255,255,255,0.08);
 
     /* Focus */
-    --color-focus: #5eb3a8;
-    --color-focus-ring: rgba(94,179,168,0.2);
+    --color-focus: #60b0a4;
+    --color-focus-ring: rgba(96,176,164,0.22);
 
     /* Toggle */
-    --color-toggle-off: #6b7280;
-    --color-toggle-knob: #e6edf3;
+    --color-toggle-off: #506460;
+    --color-toggle-knob: #dce6e4;
     --color-toggle-shadow: rgba(0,0,0,0.3);
 
     /* Scrollbar */
-    --color-scrollbar-thumb: #444c56;
-    --color-scrollbar-thumb-hover: #6e7681;
+    --color-scrollbar-thumb: #384c48;
+    --color-scrollbar-thumb-hover: #526864;
 
     /* Overlay */
-    --color-overlay: rgba(0,0,0,0.55);
+    --color-overlay: rgba(8,14,16,0.6);
     --color-icon-on-status: #ffffff;
 
-    /* Heading colors (teal-derived) */
+    /* Heading colors — teal-derived */
     --color-h1: var(--color-primary);
-    --color-h2: #6ec4b9;
+    --color-h2: #72c0b4;
     --color-h3: var(--color-primary);
 
     /* Accent variations */
     --color-border-accent: var(--color-primary);
     --color-highlight: var(--color-primary);
     --color-text-emphasis: var(--color-text);
-    --color-code: #ff6b9d;
-    --color-accent-bg: rgba(94,179,168,0.08);
-    --color-accent-border: rgba(94,179,168,0.25);
-    --color-accent-shadow: rgba(94,179,168,0.15);
+    --color-code: #d4a070;
+    --color-accent-bg: rgba(96,176,164,0.08);
+    --color-accent-border: rgba(96,176,164,0.22);
+    --color-accent-shadow: rgba(96,176,164,0.12);
 
     /* Overlay variants */
     --color-overlay-subtle: rgba(0,0,0,0.2);
-    --color-overlay-faint: rgba(255,255,255,0.03);
+    --color-overlay-faint: rgba(220,230,228,0.03);
 
     /* Targeted review panel */
-    --color-targeted-bg: #2d3235;
+    --color-targeted-bg: #282e2e;
     --color-targeted-border: #c9927a;
     --color-targeted-header: #c9927a;
     --color-targeted-number: #daa892;
 
     /* Semantic status backgrounds */
-    --color-success-light: rgba(52,211,153,0.1);
-    --color-warning-light: rgba(251,191,36,0.1);
-    --color-danger-light: rgba(248,113,113,0.1);
+    --color-success-light: rgba(72,216,152,0.1);
+    --color-warning-light: rgba(240,184,48,0.1);
+    --color-danger-light: rgba(240,112,112,0.1);
+
+    /* Sidebar — deeper teal-charcoal */
+    --color-bg-sidebar: #0e1820;
+    --color-border-sidebar: #1a2828;
+    --color-sidebar-active-bg: rgba(96, 176, 164, 0.1);
+    --color-sidebar-active-border: var(--color-primary);
+    --color-sidebar-hover-bg: rgba(96, 176, 164, 0.05);
+
+    /* Dot-grid texture */
+    --color-bg-dot: rgba(96, 176, 164, 0.025);
+
+    /* Shadows */
+    --shadow-elevated: 0 8px 24px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.25);
+    --shadow-segmented: 0 1px 3px rgba(0,0,0,0.25);
 }

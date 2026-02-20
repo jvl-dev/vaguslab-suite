@@ -54,7 +54,7 @@ class SettingsGui {
         this._RegisterCallbacks()
 
         ; Show the window
-        this.wvGui.Show("w650 h750")
+        this.wvGui.Show("w720 h700")
 
         ; Populate form after a short delay (ensures page is loaded)
         SetTimer(ObjBindMethod(this, "_PopulateForm"), -500)
@@ -145,6 +145,7 @@ class SettingsGui {
 
         ; About Tab - Version
         js .= "setText('aboutVersion', 'v" this._EscapeJS(VERSION) "');"
+        js .= "setText('footerVersion', 'v" this._EscapeJS(VERSION) "');"
 
         ; Dark mode
         isDark := settings.Get("dark_mode_enabled", true)

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Check - Reviewing...</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
     <script>
     // Apply theme + load shared CSS immediately (before paint) to prevent FOUC
     (function() {
@@ -18,13 +19,14 @@
         * { box-sizing: border-box; }
 
         body {
-            font-family: var(--font-family-base);
+            font-family: 'Outfit', var(--font-family-base);
             font-size: var(--font-size-base);
             line-height: var(--line-height-base);
             margin: 0;
             padding: var(--spacing-md);
             background: var(--color-bg);
             color: var(--color-text);
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
@@ -43,33 +45,23 @@
         }
 
         .header h1 {
-            font-family: var(--font-family-base);
-            font-size: 28px;
+            font-family: 'Outfit', var(--font-family-base);
+            font-size: 26px;
             font-weight: 600;
             color: var(--color-h1);
             margin: 0;
-            letter-spacing: -0.3px;
-            padding: 6px 14px;
-            background: linear-gradient(135deg, var(--color-accent-bg) 0%, var(--color-accent-bg) 100%);
-            border-radius: 10px;
-            border: 1px solid var(--color-accent-border);
-            box-shadow: 0 4px 12px var(--color-accent-shadow);
-            display: inline-flex;
-            align-items: center;
+            letter-spacing: -0.02em;
         }
 
         .version {
             font-size: 11px;
-            color: var(--color-text-secondary);
+            color: var(--color-text-muted);
             font-weight: 500;
-            letter-spacing: 0.5px;
-            padding: 6px 10px;
-            background: linear-gradient(135deg, var(--color-accent-bg) 0%, var(--color-accent-bg) 100%);
-            border-radius: 8px;
+            letter-spacing: 0.03em;
+            padding: 4px 10px;
+            background: var(--color-accent-bg);
+            border-radius: 6px;
             border: 1px solid var(--color-accent-border);
-            box-shadow: 0 4px 12px var(--color-accent-shadow);
-            display: inline-flex;
-            align-items: center;
         }
 
         /* Loading state */
@@ -77,79 +69,29 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
+            padding: 80px var(--spacing-md) var(--spacing-md);
         }
 
         .loading-text {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--color-text);
-            margin-bottom: var(--spacing-xs);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            margin-bottom: 20px;
+            letter-spacing: 0.01em;
         }
 
-        .loading-subtext {
-            font-size: var(--font-size-sm);
-            color: var(--color-text-muted);
-            margin-bottom: var(--spacing-lg);
+        .loading-bar {
+            width: 48px;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--color-primary);
+            opacity: 0.6;
+            animation: loadingPulse 1.6s ease-in-out infinite;
         }
 
-        /* Skeleton shimmer */
-        .skeleton-card {
-            width: 100%;
-            max-width: 900px;
-            background: var(--color-bg-card);
-            border: 1px solid var(--color-border);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md);
-            box-shadow: var(--shadow-card);
-        }
-
-        .skeleton-header {
-            margin-bottom: var(--spacing-md);
-            padding-bottom: var(--spacing-sm);
-            border-bottom: 2px solid var(--color-border);
-        }
-
-        .skeleton-line {
-            height: 12px;
-            border-radius: 6px;
-            background: linear-gradient(
-                90deg,
-                var(--color-border) 0%,
-                var(--color-bg-hint) 40%,
-                var(--color-border) 80%
-            );
-            background-size: 300% 100%;
-            animation: shimmer 1.8s ease-in-out infinite;
-            margin-bottom: 10px;
-        }
-
-        .skeleton-line:last-child { margin-bottom: 0; }
-
-        .skeleton-title {
-            height: 20px;
-            width: 35%;
-            margin-bottom: 0;
-        }
-
-        .skeleton-full   { width: 100%; }
-        .skeleton-long   { width: 88%; }
-        .skeleton-medium { width: 65%; }
-        .skeleton-short  { width: 42%; }
-
-        .skeleton-gap { height: 0; margin-bottom: var(--spacing-md); }
-
-        .skeleton-line:nth-child(2) { animation-delay: 0.1s; }
-        .skeleton-line:nth-child(3) { animation-delay: 0.2s; }
-        .skeleton-line:nth-child(4) { animation-delay: 0.1s; }
-        .skeleton-line:nth-child(5) { animation-delay: 0.15s; }
-        .skeleton-line:nth-child(6) { animation-delay: 0.25s; }
-        .skeleton-line:nth-child(7) { animation-delay: 0.1s; }
-        .skeleton-line:nth-child(8) { animation-delay: 0.2s; }
-
-        @keyframes shimmer {
-            0%   { background-position: 300% 0; }
-            100% { background-position: -300% 0; }
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.25; width: 48px; }
+            50% { opacity: 0.7; width: 64px; }
         }
 
         /* Streaming section entrance */
@@ -195,7 +137,7 @@
 
         /* Typography — matches review template */
         h1, h2, h3 {
-            font-family: var(--font-family-base);
+            font-family: 'Outfit', var(--font-family-base);
             line-height: var(--line-height-tight);
             margin-top: 0;
         }
@@ -305,7 +247,7 @@
 
         /* Accessibility: reduce motion */
         @media (prefers-reduced-motion: reduce) {
-            .skeleton-line { animation: none; }
+            .loading-bar { animation: none; opacity: 0.5; }
             .streaming-cursor { animation: none; opacity: 1; }
             .stream-enter, .error-enter { animation: none; }
         }
@@ -331,25 +273,10 @@
             <span class="version">Reviewing...</span>
         </div>
 
-        <!-- Loading skeleton (shown initially) -->
+        <!-- Loading state (shown until first token) -->
         <div id="loadingState" class="loading-state">
-            <div class="loading-text">Analyzing your report...</div>
-            <div class="loading-subtext">Response will stream as it arrives</div>
-            <div class="skeleton-card">
-                <div class="skeleton-header">
-                    <div class="skeleton-line skeleton-title"></div>
-                </div>
-                <div class="skeleton-line skeleton-full"></div>
-                <div class="skeleton-line skeleton-full"></div>
-                <div class="skeleton-line skeleton-long"></div>
-                <div class="skeleton-line skeleton-gap"></div>
-                <div class="skeleton-line skeleton-full"></div>
-                <div class="skeleton-line skeleton-full"></div>
-                <div class="skeleton-line skeleton-medium"></div>
-                <div class="skeleton-line skeleton-gap"></div>
-                <div class="skeleton-line skeleton-full"></div>
-                <div class="skeleton-line skeleton-short"></div>
-            </div>
+            <div class="loading-text">Analyzing report...</div>
+            <div class="loading-bar"></div>
         </div>
 
         <!-- Streaming content (shown when tokens arrive) -->

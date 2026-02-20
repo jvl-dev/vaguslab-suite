@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
 <script>
-// Apply theme + load shared CSS immediately (before paint) to prevent FOUC
+// Apply theme + load shared CSS + rc-theme (before paint)
 (function() {
     var p = new URLSearchParams(location.search);
     if (p.get('theme')) document.documentElement.dataset.theme = p.get('theme');
@@ -16,113 +17,179 @@
 </script>
 <style>
 /* ============================================
-   Report Check Settings - Modern UI
+   Report Check Settings — Sidebar Layout
    ============================================ */
 
-/* Titlebar - ensure Webdings font for window control buttons */
+/* Typography override — Outfit with Inter fallback */
+body {
+    font-family: 'Outfit', var(--font-family-base);
+    background: var(--color-titlebar);
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Titlebar Override ---- */
+.titlebar {
+    border-bottom: none;
+    height: 36px;
+}
+.titlebar-accent {
+    width: 3px;
+    align-self: center;
+    height: 14px;
+    margin-left: 12px;
+    background: var(--color-primary);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.titlebar-text {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
 .titlebar-btn {
     font-family: Webdings;
 }
 
-/* Footer */
-.footer {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: var(--color-bg-card);
-    border-top: 1px solid var(--color-border);
-    gap: 12px;
-    flex-shrink: 0;
-}
-.footer-version {
-    font-size: 11px;
-    color: var(--color-text-muted);
-    white-space: nowrap;
-}
-
-/* Main Layout - extends base body from components.css */
-body {
-    background: var(--color-bg);
-    height: 100vh;
-}
-
+/* ---- Main Grid Layout ---- */
 .main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    grid-template-rows: 1fr auto;
     overflow: hidden;
     background: var(--color-bg);
 }
 
-/* Tab Navigation */
-.tab-nav {
+/* ---- Sidebar Navigation ---- */
+.sidebar {
+    grid-row: 1;
+    grid-column: 1;
+    background: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border-sidebar);
     display: flex;
-    background: var(--color-bg-card);
-    border-bottom: 1px solid var(--color-border);
-    padding: 0 12px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    gap: 0;
+    flex-direction: column;
+    padding: 8px;
+    overflow-y: auto;
 }
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 2px; }
+
+.sidebar-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-caps);
+    padding: 14px 12px 6px;
+}
+.sidebar-label:first-child {
+    padding-top: 4px;
+}
+.sidebar-spacer {
+    flex: 1;
+    min-height: 8px;
+}
+
 .tab-btn {
-    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
     cursor: pointer;
     border: none;
     background: none;
     color: var(--color-text-secondary);
-    font-size: 12px;
+    font-size: 13px;
     font-family: inherit;
     font-weight: 500;
-    border-bottom: 2px solid transparent;
-    transition: color var(--transition), border-color var(--transition), background var(--transition);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
     white-space: nowrap;
+    text-align: left;
+    width: 100%;
+    border-left: 2px solid transparent;
+    margin-bottom: 1px;
 }
 .tab-btn:hover {
-    color: var(--color-primary-hover);
-    background: var(--color-bg-hint);
+    color: var(--color-text);
+    background: var(--color-sidebar-hover-bg);
 }
 .tab-btn.active {
     color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
+    background: var(--color-sidebar-active-bg);
+    border-left-color: var(--color-sidebar-active-border);
+    font-weight: 600;
 }
+.tab-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
+}
+.tab-btn:hover svg { opacity: 0.7; }
+.tab-btn.active svg { opacity: 1; }
 
-/* Tab Content */
+/* ---- Tab Content ---- */
 .tab-content {
-    flex: 1;
+    grid-row: 1;
+    grid-column: 2;
     overflow-y: auto;
-    padding: 20px 24px;
+    padding: 24px 28px;
     scroll-behavior: smooth;
+    background-image: radial-gradient(circle, var(--color-bg-dot) 1px, transparent 1px);
+    background-size: 20px 20px;
 }
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
 
-/* Card entrance animation on tab switch */
-@keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+.tab-content::-webkit-scrollbar { width: 6px; }
+.tab-content::-webkit-scrollbar-track { background: transparent; }
+.tab-content::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 3px; }
+.tab-content::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
+
+/* ---- Card animation ---- */
+@keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
 .tab-pane.active .card {
-    animation: cardFadeIn 0.3s ease-out both;
+    animation: cardSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-.tab-pane.active .card:nth-child(2) { animation-delay: 0.04s; }
-.tab-pane.active .card:nth-child(3) { animation-delay: 0.08s; }
-.tab-pane.active .card:nth-child(4) { animation-delay: 0.12s; }
-.tab-pane.active .card:nth-child(5) { animation-delay: 0.16s; }
-.tab-pane.active .card:nth-child(6) { animation-delay: 0.20s; }
+.tab-pane.active .card:nth-child(2) { animation-delay: 0.05s; }
+.tab-pane.active .card:nth-child(3) { animation-delay: 0.10s; }
+.tab-pane.active .card:nth-child(4) { animation-delay: 0.15s; }
+.tab-pane.active .card:nth-child(5) { animation-delay: 0.20s; }
+.tab-pane.active .card:nth-child(6) { animation-delay: 0.25s; }
 
 @media (prefers-reduced-motion: reduce) {
-    .tab-pane.active .card { animation: none; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
-/* Form Controls - page-specific overrides (base styles in components.css) */
+/* ---- Card hover elevation ---- */
+.card {
+    transition: box-shadow 0.25s ease;
+}
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
+}
+[data-theme="dark"] .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ---- Form Controls ---- */
 .form-group label { width: 140px; }
 .form-group select,
 .form-group input[type="text"],
 .form-group input[type="password"] { max-width: 320px; }
 .form-group-wide input[type="text"] { max-width: 100%; }
 
-/* Segmented Control */
+/* ---- Segmented Control ---- */
 .segmented-control {
     display: flex;
     background: var(--color-bg-hint);
@@ -142,7 +209,7 @@ body {
     font-family: inherit;
     font-weight: 500;
     cursor: pointer;
-    transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 .segmented-btn:hover {
     color: var(--color-text);
@@ -160,7 +227,7 @@ body {
     margin-top: 12px;
 }
 
-/* Toggle Switches */
+/* ---- Toggle Switches ---- */
 .toggle-group {
     display: flex;
     align-items: center;
@@ -196,26 +263,19 @@ body {
     bottom: 3px;
     background: var(--color-toggle-knob);
     border-radius: 50%;
-    transition: transform 0.2s;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px var(--color-toggle-shadow);
 }
-.toggle input:checked + .toggle-slider {
-    background: var(--color-primary);
-}
-.toggle input:checked + .toggle-slider::before {
-    transform: translateX(18px);
-}
-.toggle input:disabled + .toggle-slider {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
+.toggle input:checked + .toggle-slider { background: var(--color-primary); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
 .toggle-label {
     font-size: 13px;
     color: var(--color-text);
     cursor: pointer;
 }
 
-/* Textarea */
+/* ---- Textarea ---- */
 textarea {
     width: 100%;
     padding: 10px;
@@ -227,98 +287,15 @@ textarea {
     background: var(--color-bg-hint);
     resize: vertical;
     outline: none;
-    transition: border-color var(--transition), box-shadow var(--transition);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 textarea:focus {
     border-color: var(--color-focus);
     box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
-/* Save Indicator */
-.save-indicator {
-    font-size: 12px;
-    color: var(--color-success);
-    opacity: 0;
-    transition: opacity 0.2s;
-    margin-left: auto;
-}
-.save-indicator.visible {
-    opacity: 1;
-}
-
-/* DICOM Lock Indicator */
-.dicom-lock-indicator {
-    display: none;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    opacity: 0.7;
-    user-select: none;
-}
-.dicom-lock-indicator.visible {
-    display: flex;
-}
-.dicom-lock-indicator.locked {
-    color: var(--color-success);
-    opacity: 0.85;
-}
-.dicom-lock-indicator svg {
-    flex-shrink: 0;
-}
-
-/* Warning Text */
-.warning-text {
-    color: var(--color-warning);
-    font-size: 12px;
-    margin-top: 8px;
-    display: none;
-}
-.warning-text.visible {
-    display: block;
-}
-
-/* API Status */
-.api-status {
-    font-size: 12px;
-    margin-top: 8px;
-}
-.api-status.success {
-    color: var(--color-success);
-}
-.api-status.error {
-    color: var(--color-danger);
-}
-
-/* Hint Text */
-.hint {
-    font-size: 12px;
-    color: var(--color-text-muted);
-    margin-top: 4px;
-    line-height: 1.4;
-}
-.hint-block {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin-top: 12px;
-    line-height: 1.5;
-    padding: 10px 12px;
-    background: var(--color-bg-hint);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-}
-
-/* Standalone hint-block (not inside a card) */
-.tab-pane > .hint-block {
-    margin-top: 0;
-    margin-bottom: 16px;
-}
-
-/* Details disclosure */
-details.card {
-    cursor: default;
-}
+/* ---- Details Disclosure ---- */
+details.card { cursor: default; }
 details.card summary {
     cursor: pointer;
     list-style: none;
@@ -338,31 +315,137 @@ details.card summary::after {
     transition: transform 0.2s;
     flex-shrink: 0;
 }
-details[open].card summary::after {
-    transform: rotate(45deg);
-}
+details[open].card summary::after { transform: rotate(45deg); }
 details.card .details-body {
     margin-top: 16px;
     padding-top: 12px;
     border-top: 1px solid var(--color-border-light);
 }
 
-/* Scrollbar (Chromium) */
-.tab-content::-webkit-scrollbar {
-    width: 8px;
+/* ---- Hint Text ---- */
+.hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+    line-height: 1.5;
 }
-.tab-content::-webkit-scrollbar-track {
-    background: var(--color-bg);
-}
-.tab-content::-webkit-scrollbar-thumb {
-    background: var(--color-scrollbar-thumb);
-    border-radius: 4px;
-}
-.tab-content::-webkit-scrollbar-thumb:hover {
-    background: var(--color-scrollbar-thumb-hover);
+.hint-block {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    padding: 12px 14px;
+    background: var(--color-bg-hint);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
+    margin-bottom: 16px;
 }
 
-/* Modal Dialog System */
+/* ---- Warning Text ---- */
+.warning-text {
+    color: var(--color-warning);
+    font-size: 12px;
+    margin-top: 8px;
+    display: none;
+}
+.warning-text.visible { display: block; }
+
+/* ---- API Status ---- */
+.api-status {
+    font-size: 12px;
+    margin-top: 8px;
+}
+.api-status.success { color: var(--color-success); }
+.api-status.error { color: var(--color-danger); }
+
+/* ---- DICOM Lock Indicator ---- */
+.dicom-lock-indicator {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    opacity: 0.7;
+    user-select: none;
+}
+.dicom-lock-indicator.visible { display: flex; }
+.dicom-lock-indicator.locked { color: var(--color-success); opacity: 0.85; }
+.dicom-lock-indicator svg { flex-shrink: 0; }
+
+/* ---- Footer ---- */
+.footer {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--color-bg-sidebar);
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+.footer-version {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    user-select: none;
+}
+.save-indicator {
+    font-size: 12px;
+    color: var(--color-success);
+    margin-right: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.save-indicator::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-success);
+}
+.save-indicator.visible { opacity: 1; }
+
+/* ---- Links ---- */
+a { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+a:hover { text-decoration: underline; }
+
+/* ---- Update Progress Bar ---- */
+.update-progress { margin-top: 16px; padding: 12px 0; }
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--color-bg-hint);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+.progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-top: 8px;
+    text-align: center;
+}
+.progress-details {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* ---- Modal Dialog ---- */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -372,16 +455,15 @@ details.card .details-body {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
-.modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
+.modal-overlay.active { display: flex; opacity: 1; }
 .modal-dialog {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border-radius: 12px;
     box-shadow: var(--shadow-elevated);
     width: 440px;
     max-width: 90vw;
@@ -389,23 +471,23 @@ details.card .details-body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform: scale(0.96) translateY(8px);
-    transition: transform 0.2s ease;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.modal-overlay.active .modal-dialog {
-    transform: scale(1) translateY(0);
-}
+.modal-overlay.active .modal-dialog { transform: scale(1) translateY(0); }
 .modal-header {
     display: flex;
     align-items: center;
-    padding: 16px 20px 12px;
+    gap: 10px;
+    padding: 18px 22px 14px;
     border-bottom: 1px solid var(--color-border-light);
     font-size: 14px;
     font-weight: 600;
     color: var(--color-text);
+    letter-spacing: -0.01em;
 }
 .modal-body {
-    padding: 16px 20px;
+    padding: 18px 22px;
     font-size: 13px;
     color: var(--color-text-secondary);
     line-height: 1.6;
@@ -414,88 +496,67 @@ details.card .details-body {
     flex: 1 1 auto;
     min-height: 0;
 }
-.modal-body ul {
-    margin: 8px 0;
-    padding-left: 20px;
-}
-.modal-body li {
-    margin-bottom: 4px;
-}
+.modal-body ul { margin: 8px 0; padding-left: 20px; }
+.modal-body li { margin-bottom: 4px; }
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 14px 22px;
     border-top: 1px solid var(--color-border-light);
     flex-shrink: 0;
 }
 
-/* Update Progress Bar */
-.update-progress {
-    margin-top: 16px;
-    padding: 12px 0;
-}
-
-.progress-bar-container {
-    width: 100%;
-    height: 8px;
-    background: var(--color-bg-hint);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-.progress-text {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-primary);
-    margin-top: 8px;
-    text-align: center;
-}
-
-.progress-details {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin-top: 4px;
-    text-align: center;
-}
-
-/* Utility classes */
+/* ---- Utility ---- */
 .hidden { display: none; }
 .flex-row { display: flex; gap: var(--space-xs); }
 .flex-shrink-0 { flex-shrink: 0; }
-.flex-fill { flex: 1; max-width: none; }
-.mt-xs { margin-top: var(--space-xxs); }
 .mt-sm { margin-top: var(--space-xs); }
 .mt-md { margin-top: var(--space-sm); }
-.label-auto { width: auto; white-space: nowrap; }
-.line-height-relaxed { line-height: var(--line-height-relaxed); }
+.line-height-relaxed { line-height: 1.6; }
 </style>
 </head>
 <body>
 
-<!-- Titlebar -->
+<!-- Title Bar -->
 <div class="titlebar">
+    <span class="titlebar-accent"></span>
     <span class="titlebar-text">Report Check Settings</span>
     <span class="titlebar-btn" onclick="ahk.MinimizeWindow()" title="Minimize">0</span>
     <span class="titlebar-btn titlebar-btn-close" onclick="ahk.CloseSettings()" title="Close">r</span>
 </div>
 
 <div class="main">
-<!-- Tab Navigation -->
-<div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('mode', this)">Mode</button>
-    <button class="tab-btn" onclick="switchTab('api', this)">API</button>
-    <button class="tab-btn" onclick="switchTab('advanced', this)">Advanced</button>
-    <button class="tab-btn" onclick="switchTab('general', this)">General</button>
-</div>
+
+<!-- Sidebar Navigation -->
+<nav class="sidebar">
+    <div class="sidebar-label">Configure</div>
+    <button class="tab-btn active" onclick="switchTab('mode', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="10" height="12" rx="1.5"/><path d="M6 1.5h4"/><path d="M5.5 8l2 2 3-4"/></svg>
+        Mode
+    </button>
+    <button class="tab-btn" onclick="switchTab('api', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="5.5" r="3"/><path d="M8.2 7.8l-5 5"/><path d="M4.5 11.5l2 2"/></svg>
+        API
+    </button>
+
+    <div class="sidebar-label">Tools</div>
+    <button class="tab-btn" onclick="switchTab('advanced', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h4"/><path d="M7 2v4l-3.5 6.5a1 1 0 00.9 1.5h7.2a1 1 0 00.9-1.5L9 6V2"/></svg>
+        Advanced
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="5" x2="14" y2="5"/><line x1="2" y1="11" x2="14" y2="11"/><circle cx="5" cy="5" r="1.5"/><circle cx="11" cy="11" r="1.5"/></svg>
+        Settings
+    </button>
+
+    <div class="sidebar-spacer"></div>
+
+    <button class="tab-btn" onclick="switchTab('about', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 11V7"/><circle cx="8" cy="4.5" r="0.75" fill="currentColor" stroke="none"/></svg>
+        About
+    </button>
+</nav>
 
 <!-- Tab Content -->
 <div class="tab-content">
@@ -522,15 +583,11 @@ details.card .details-body {
         <div class="card-header">Default Models</div>
         <div class="form-group">
             <label>Comprehensive:</label>
-            <select id="ComprehensiveModel">
-                <!-- Populated dynamically based on provider -->
-            </select>
+            <select id="ComprehensiveModel"></select>
         </div>
         <div class="form-group">
             <label>Proofreading:</label>
-            <select id="ProofreadingModel">
-                <!-- Populated dynamically based on provider -->
-            </select>
+            <select id="ProofreadingModel"></select>
         </div>
         <div class="hint">Models available depend on the AI provider selected in the API tab.</div>
     </div>
@@ -633,19 +690,8 @@ details.card .details-body {
     </div>
 </div>
 
-<!-- ==================== General Tab ==================== -->
-<div id="tab-general" class="tab-pane">
-    <div class="card">
-        <div class="card-header">Startup</div>
-        <div class="toggle-group">
-            <label class="toggle">
-                <input type="checkbox" id="StartupEnabled">
-                <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Launch Report Check when Windows starts</span>
-        </div>
-    </div>
-
+<!-- ==================== Settings Tab ==================== -->
+<div id="tab-settings" class="tab-pane">
     <div class="card">
         <div class="card-header">Appearance</div>
         <div class="toggle-group">
@@ -654,6 +700,17 @@ details.card .details-body {
                 <span class="toggle-slider"></span>
             </label>
             <span class="toggle-label">Dark mode</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Startup</div>
+        <div class="toggle-group">
+            <label class="toggle">
+                <input type="checkbox" id="StartupEnabled">
+                <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Launch Report Check when Windows starts</span>
         </div>
     </div>
 
@@ -668,13 +725,23 @@ details.card .details-body {
         </div>
         <button class="btn btn-secondary mt-sm" onclick="ahk.DiagnoseKeys()">Diagnose &amp; Fix Stuck Keys</button>
     </div>
+</div>
+
+<!-- ==================== About Tab ==================== -->
+<div id="tab-about" class="tab-pane">
+    <div class="card">
+        <div class="card-header" id="aboutVersion">Report Check</div>
+        <div class="hint">AI-powered radiology report quality checking for PowerScribe.</div>
+        <div style="margin-top: 10px;">
+            <span class="hint">Contact: </span>
+            <a href="mailto:rad@vaguslab.org">rad@vaguslab.org</a>
+        </div>
+    </div>
 
     <div class="card hidden" id="updateCard">
         <div class="card-header">Updates</div>
         <div class="version-text" id="updateStatusText">Current version: </div>
         <div class="update-info" id="updateAvailableText"></div>
-
-        <!-- Progress visualization -->
         <div class="update-progress hidden" id="updateProgress">
             <div class="progress-bar-container">
                 <div class="progress-bar" id="updateProgressBar"></div>
@@ -682,7 +749,6 @@ details.card .details-body {
             <div class="progress-text" id="updateProgressText">0%</div>
             <div class="progress-details" id="updateProgressDetails"></div>
         </div>
-
         <div class="flex-row mt-md">
             <button class="btn btn-primary" id="primaryUpdateBtn" onclick="ahk.OnUpdateClick()">Check for Updates</button>
             <button class="btn btn-secondary hidden" id="cancelUpdateBtn" onclick="ahk.CancelUpdate()">Cancel</button>
@@ -695,7 +761,7 @@ details.card .details-body {
 <!-- Footer -->
 <div class="footer">
     <span class="dicom-lock-indicator" id="dicomLockIndicator"></span>
-    <span class="footer-version" id="aboutVersion"></span>
+    <span class="footer-version" id="footerVersion"></span>
     <span class="save-indicator" id="saveIndicator">Settings saved</span>
     <button class="btn btn-primary" onclick="ahk.CloseSettings()">Close</button>
 </div>
@@ -726,13 +792,10 @@ function setTheme(mode) {
    ============================================ */
 function showModal(title, body, icon, buttons) {
     const overlay = document.getElementById('modalOverlay');
-    const titleEl = document.getElementById('modalTitle');
-    const bodyEl = document.getElementById('modalBody');
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = body;
+
     const footerEl = document.getElementById('modalFooter');
-
-    titleEl.textContent = title;
-    bodyEl.innerHTML = body;
-
     footerEl.innerHTML = '';
     (buttons || [{ label: 'OK', style: 'primary', action: 'close' }]).forEach(btn => {
         const el = document.createElement('button');
@@ -784,24 +847,15 @@ function collectFormData() {
     const chk = id => document.getElementById(id)?.checked || false;
 
     return {
-        // Mode
         reviewMode: document.querySelector('input[name="reviewMode"]:checked')?.value || 'comprehensive',
-
-        // API
         Provider: val('Provider'),
         APIKey: val('APIKey'),
-
-        // Models (on Mode tab, but depend on provider)
         ComprehensiveModel: val('ComprehensiveModel'),
         ProofreadingModel: val('ProofreadingModel'),
-
-        // Advanced
         BetaModeOverrideHotkeys: chk('BetaModeOverrideHotkeys'),
         BetaPowerScribeAutoselect: chk('BetaPowerScribeAutoselect'),
         DemographicExtractionEnabled: chk('DemographicExtractionEnabled'),
         TargetedReviewEnabled: chk('TargetedReviewEnabled'),
-
-        // General
         StartupEnabled: chk('StartupEnabled'),
         DarkModeEnabled: chk('DarkModeEnabled'),
         DebugLogging: chk('DebugLogging')
@@ -890,7 +944,6 @@ function populateModelDropdowns(models) {
             opt.textContent = m;
             el.appendChild(opt);
         });
-        // Restore previous selection if still available
         if (current && Array.prototype.some.call(el.options, function(o) { return o.value === current; })) {
             el.value = current;
         }
@@ -961,9 +1014,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize mode radio handlers
-    const modeRadios = document.querySelectorAll('input[name="reviewMode"]');
-    modeRadios.forEach(radio => {
+    document.querySelectorAll('input[name="reviewMode"]').forEach(radio => {
         radio.addEventListener('change', function() {
             updateModeWarning();
         });
@@ -986,8 +1037,6 @@ function updateModeWarning() {
 
 function updateDependencies() {
     const isEnabled = document.getElementById('DemographicExtractionEnabled')?.checked || false;
-
-    // Show/hide targeted review card based on demographic extraction
     const trCard = document.getElementById('TargetedReviewCard');
     if (trCard) {
         trCard.classList.toggle('hidden', !isEnabled);

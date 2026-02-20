@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
 <script>
 // Apply theme + load shared CSS + local bruce theme (before paint)
 (function() {
@@ -15,50 +16,171 @@
 })();
 </script>
 <style>
-/* Titlebar */
-.titlebar-btn { font-family: Webdings; }
+/* ============================================
+   Bruce Helper Settings — Sidebar Layout
+   ============================================ */
 
-/* Main Layout */
+/* Typography override — Outfit with Inter fallback */
 body {
-    background: var(--color-bg);
+    font-family: 'Outfit', var(--font-family-base);
+    background: var(--color-titlebar);
     height: 100vh;
+    -webkit-font-smoothing: antialiased;
 }
+
+/* ---- Titlebar Override ---- */
+.titlebar {
+    border-bottom: none;
+    height: 36px;
+}
+.titlebar-accent {
+    width: 3px;
+    align-self: center;
+    height: 14px;
+    margin-left: 12px;
+    background: var(--color-primary);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.titlebar-text {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.titlebar-btn {
+    font-family: Webdings;
+}
+
+/* ---- Main Grid Layout ---- */
 .main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    grid-template-rows: 1fr auto;
     overflow: hidden;
     background: var(--color-bg);
 }
 
-/* Scrollable Content */
-.content {
-    flex: 1;
+/* ---- Sidebar Navigation ---- */
+.sidebar {
+    grid-row: 1;
+    grid-column: 1;
+    background: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border-sidebar);
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
     overflow-y: auto;
-    padding: 20px 24px;
-    scroll-behavior: smooth;
 }
-.content::-webkit-scrollbar { width: 8px; }
-.content::-webkit-scrollbar-track { background: var(--color-bg); }
-.content::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 4px; }
-.content::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 2px; }
 
-/* Card entrance animation */
-@keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+.sidebar-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-caps);
+    padding: 14px 12px 6px;
+}
+.sidebar-label:first-child {
+    padding-top: 4px;
+}
+.sidebar-spacer {
+    flex: 1;
+    min-height: 8px;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    text-align: left;
+    width: 100%;
+    border-left: 2px solid transparent;
+    margin-bottom: 1px;
+}
+.tab-btn:hover {
+    color: var(--color-text);
+    background: var(--color-sidebar-hover-bg);
+}
+.tab-btn.active {
+    color: var(--color-primary);
+    background: var(--color-sidebar-active-bg);
+    border-left-color: var(--color-sidebar-active-border);
+    font-weight: 600;
+}
+.tab-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
+}
+.tab-btn:hover svg { opacity: 0.7; }
+.tab-btn.active svg { opacity: 1; }
+
+/* ---- Tab Content ---- */
+.tab-content {
+    grid-row: 1;
+    grid-column: 2;
+    overflow-y: auto;
+    padding: 24px 28px;
+    scroll-behavior: smooth;
+    background-image: radial-gradient(circle, var(--color-bg-dot) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.tab-content::-webkit-scrollbar { width: 6px; }
+.tab-content::-webkit-scrollbar-track { background: transparent; }
+.tab-content::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 3px; }
+.tab-content::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
+
+/* ---- Card animation ---- */
+@keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.content .card {
-    animation: cardFadeIn 0.3s ease-out both;
+.tab-pane.active .card {
+    animation: cardSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-.content .card:nth-child(2) { animation-delay: 0.04s; }
-.content .card:nth-child(3) { animation-delay: 0.08s; }
-.content .card:nth-child(4) { animation-delay: 0.12s; }
+.tab-pane.active .card:nth-child(2) { animation-delay: 0.05s; }
+.tab-pane.active .card:nth-child(3) { animation-delay: 0.10s; }
+.tab-pane.active .card:nth-child(4) { animation-delay: 0.15s; }
+
 @media (prefers-reduced-motion: reduce) {
-    .content .card { animation: none; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
-/* Toggle Switches */
+/* ---- Card hover elevation ---- */
+.card {
+    transition: box-shadow 0.25s ease;
+}
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
+}
+[data-theme="dark"] .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ---- Toggle Switches ---- */
 .toggle-group {
     display: flex;
     align-items: center;
@@ -95,22 +217,19 @@ body {
     bottom: 3px;
     background: var(--color-toggle-knob);
     border-radius: 50%;
-    transition: transform 0.2s;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px var(--color-toggle-shadow);
 }
-.toggle input:checked + .toggle-slider {
-    background: var(--color-primary);
-}
-.toggle input:checked + .toggle-slider::before {
-    transform: translateX(18px);
-}
+.toggle input:checked + .toggle-slider { background: var(--color-primary); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
 .toggle-label {
     font-size: 13px;
     color: var(--color-text);
     cursor: pointer;
 }
 
-/* Status indicators */
+/* ---- Status indicators ---- */
 .status-list {
     display: flex;
     flex-direction: column;
@@ -135,10 +254,13 @@ body {
     background: var(--color-success);
 }
 
-/* Form Controls */
-.form-group label { width: 140px; }
+/* ---- Form Controls ---- */
+.form-group {
+    flex-wrap: wrap;
+}
+.form-group label { width: auto; }
 .form-group input[type="number"] {
-    width: 100px;
+    width: 80px;
     padding: 7px 10px;
     border: 1px solid var(--color-border-input);
     border-radius: var(--radius-sm);
@@ -153,48 +275,20 @@ body {
     border-color: var(--color-focus);
     box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
+.form-group .hint {
+    width: 100%;
+    margin-top: 0;
+}
 
-/* Hint text */
+/* ---- Hint text ---- */
 .hint {
     font-size: 12px;
     color: var(--color-text-muted);
     margin-top: 4px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-/* Advanced disclosure */
-details.card {
-    cursor: default;
-}
-details.card summary {
-    cursor: pointer;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    user-select: none;
-}
-details.card summary::-webkit-details-marker { display: none; }
-details.card summary::after {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-right: 2px solid var(--color-text-muted);
-    border-bottom: 2px solid var(--color-text-muted);
-    transform: rotate(-45deg);
-    transition: transform 0.2s;
-    flex-shrink: 0;
-}
-details[open].card summary::after {
-    transform: rotate(45deg);
-}
-details.card .details-body {
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--color-border-light);
-}
-
-/* DICOM Lock Indicator */
+/* ---- DICOM Lock Indicator ---- */
 .dicom-lock-indicator {
     display: none;
     align-items: center;
@@ -205,56 +299,55 @@ details.card .details-body {
     opacity: 0.7;
     user-select: none;
 }
-.dicom-lock-indicator.visible {
-    display: flex;
-}
-.dicom-lock-indicator.locked {
-    color: var(--color-success);
-    opacity: 0.85;
-}
-.dicom-lock-indicator svg {
-    flex-shrink: 0;
-}
+.dicom-lock-indicator.visible { display: flex; }
+.dicom-lock-indicator.locked { color: var(--color-success); opacity: 0.85; }
+.dicom-lock-indicator svg { flex-shrink: 0; }
 
-/* Footer */
+/* ---- Footer ---- */
 .footer {
+    grid-row: 2;
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    padding: 12px 16px;
-    background: var(--color-bg-card);
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--color-bg-sidebar);
     border-top: 1px solid var(--color-border);
-    gap: 12px;
     flex-shrink: 0;
 }
 .footer-version {
     font-size: 11px;
     color: var(--color-text-muted);
-    white-space: nowrap;
+    user-select: none;
 }
-
-/* Save Indicator */
 .save-indicator {
     font-size: 12px;
     color: var(--color-success);
+    margin-right: auto;
     opacity: 0;
-    transition: opacity 0.2s;
-    margin-left: auto;
+    transition: opacity 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-.save-indicator.visible {
-    opacity: 1;
+.save-indicator::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-success);
 }
+.save-indicator.visible { opacity: 1; }
 
-/* Update Progress Bar */
-.update-progress {
-    margin-top: 16px;
-    padding: 12px 0;
-}
+/* ---- Update Progress Bar ---- */
+.update-progress { margin-top: 16px; padding: 12px 0; }
 .progress-bar-container {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: var(--color-bg-hint);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border-radius: 3px;
     overflow: hidden;
 }
 .progress-bar {
@@ -262,6 +355,7 @@ details.card .details-body {
     background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
     width: 0%;
     transition: width 0.3s ease;
+    border-radius: 3px;
 }
 .progress-text {
     font-size: 13px;
@@ -277,7 +371,7 @@ details.card .details-body {
     text-align: center;
 }
 
-/* Modal Dialog */
+/* ---- Modal Dialog ---- */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -287,16 +381,15 @@ details.card .details-body {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
-.modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
+.modal-overlay.active { display: flex; opacity: 1; }
 .modal-dialog {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border-radius: 12px;
     box-shadow: var(--shadow-elevated);
     width: 420px;
     max-width: 90vw;
@@ -304,23 +397,23 @@ details.card .details-body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform: scale(0.96) translateY(8px);
-    transition: transform 0.2s ease;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.modal-overlay.active .modal-dialog {
-    transform: scale(1) translateY(0);
-}
+.modal-overlay.active .modal-dialog { transform: scale(1) translateY(0); }
 .modal-header {
     display: flex;
     align-items: center;
-    padding: 16px 20px 12px;
+    gap: 10px;
+    padding: 18px 22px 14px;
     border-bottom: 1px solid var(--color-border-light);
     font-size: 14px;
     font-weight: 600;
     color: var(--color-text);
+    letter-spacing: -0.01em;
 }
 .modal-body {
-    padding: 16px 20px;
+    padding: 18px 22px;
     font-size: 13px;
     color: var(--color-text-secondary);
     line-height: 1.6;
@@ -332,12 +425,16 @@ details.card .details-body {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 14px 22px;
     border-top: 1px solid var(--color-border-light);
     flex-shrink: 0;
 }
 
-/* Utility */
+/* ---- Links ---- */
+a { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+a:hover { text-decoration: underline; }
+
+/* ---- Utility ---- */
 .hidden { display: none; }
 .flex-row { display: flex; gap: var(--space-xs); }
 .mt-sm { margin-top: var(--space-xs); }
@@ -346,19 +443,49 @@ details.card .details-body {
 </head>
 <body>
 
-<!-- Titlebar -->
+<!-- Title Bar -->
 <div class="titlebar">
+    <span class="titlebar-accent"></span>
     <span class="titlebar-text">Bruce Helper Settings</span>
     <span class="titlebar-btn" onclick="ahk.MinimizeWindow()" title="Minimize">0</span>
     <span class="titlebar-btn titlebar-btn-close" onclick="ahk.CloseSettings()" title="Close">r</span>
 </div>
 
 <div class="main">
-<div class="content">
 
-    <!-- Status -->
+<!-- Sidebar Navigation -->
+<nav class="sidebar">
+    <div class="sidebar-label">Configure</div>
+    <button class="tab-btn active" onclick="switchTab('status', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1.5"/></svg>
+        Status
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="5" x2="14" y2="5"/><line x1="2" y1="11" x2="14" y2="11"/><circle cx="5" cy="5" r="1.5"/><circle cx="11" cy="11" r="1.5"/></svg>
+        Settings
+    </button>
+
+    <div class="sidebar-label">Tools</div>
+    <button class="tab-btn" onclick="switchTab('advanced', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h4"/><path d="M7 2v4l-3.5 6.5a1 1 0 00.9 1.5h7.2a1 1 0 00.9-1.5L9 6V2"/></svg>
+        Advanced
+    </button>
+
+    <div class="sidebar-spacer"></div>
+
+    <button class="tab-btn" onclick="switchTab('about', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 11V7"/><circle cx="8" cy="4.5" r="0.75" fill="currentColor" stroke="none"/></svg>
+        About
+    </button>
+</nav>
+
+<!-- Tab Content -->
+<div class="tab-content">
+
+<!-- ==================== Status Tab ==================== -->
+<div id="tab-status" class="tab-pane active">
     <div class="card">
-        <div class="card-header">Status</div>
+        <div class="card-header">Monitoring</div>
         <div class="status-list">
             <div class="status-item">
                 <span class="status-dot" id="statusPS360"></span>
@@ -382,10 +509,12 @@ details.card .details-body {
             </div>
         </div>
     </div>
+</div>
 
-    <!-- General -->
+<!-- ==================== Settings Tab ==================== -->
+<div id="tab-settings" class="tab-pane">
     <div class="card">
-        <div class="card-header">General</div>
+        <div class="card-header">Startup</div>
         <div class="toggle-group">
             <label class="toggle">
                 <input type="checkbox" id="LaunchOnStartup">
@@ -400,6 +529,10 @@ details.card .details-body {
             </label>
             <span class="toggle-label">Check for updates on startup</span>
         </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Appearance</div>
         <div class="toggle-group">
             <label class="toggle">
                 <input type="checkbox" id="DarkModeEnabled" onchange="setTheme(this.checked ? 'dark' : 'light'); autoSave();">
@@ -408,13 +541,40 @@ details.card .details-body {
             <span class="toggle-label">Dark mode</span>
         </div>
     </div>
+</div>
 
-    <!-- Updates -->
+<!-- ==================== Advanced Tab ==================== -->
+<div id="tab-advanced" class="tab-pane">
+    <div class="card">
+        <div class="card-header">Timing</div>
+        <div class="form-group">
+            <label>Select delay:</label>
+            <input type="number" id="PowerscribeSelectDelay" min="0" max="5000" step="10">
+            <span class="hint">ms after Ctrl+A in PowerScribe</span>
+        </div>
+        <div class="form-group">
+            <label>Clipboard defer:</label>
+            <input type="number" id="ClipboardDeferDelay" min="0" max="5000" step="10">
+            <span class="hint">ms before processing clipboard</span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== About Tab ==================== -->
+<div id="tab-about" class="tab-pane">
+    <div class="card">
+        <div class="card-header" id="aboutVersion">Bruce Helper</div>
+        <div class="hint">Auto-paste listener for Bruce radiology reports in PowerScribe.</div>
+        <div style="margin-top: 10px;">
+            <span class="hint">Contact: </span>
+            <a href="mailto:rad@vaguslab.org">rad@vaguslab.org</a>
+        </div>
+    </div>
+
     <div class="card" id="updateCard">
         <div class="card-header">Updates</div>
         <div class="version-text" id="updateStatusText">Current version: </div>
         <div class="update-info hidden" id="updateAvailableText"></div>
-
         <div class="update-progress hidden" id="updateProgress">
             <div class="progress-bar-container">
                 <div class="progress-bar" id="updateProgressBar"></div>
@@ -422,36 +582,19 @@ details.card .details-body {
             <div class="progress-text" id="updateProgressText">0%</div>
             <div class="progress-details" id="updateProgressDetails"></div>
         </div>
-
         <div class="flex-row mt-md">
             <button class="btn btn-primary" id="primaryUpdateBtn" onclick="ahk.OnUpdateClick()">Check for Updates</button>
             <button class="btn btn-secondary hidden" id="cancelUpdateBtn" onclick="ahk.CancelUpdate()">Cancel</button>
         </div>
     </div>
+</div>
 
-    <!-- Advanced (disclosure) -->
-    <details class="card">
-        <summary class="card-header">Advanced</summary>
-        <div class="details-body">
-            <div class="form-group">
-                <label>Select delay:</label>
-                <input type="number" id="PowerscribeSelectDelay" min="0" max="5000" step="10">
-                <span class="hint">ms after Ctrl+A in PowerScribe</span>
-            </div>
-            <div class="form-group">
-                <label>Clipboard defer:</label>
-                <input type="number" id="ClipboardDeferDelay" min="0" max="5000" step="10">
-                <span class="hint">ms before processing clipboard</span>
-            </div>
-        </div>
-    </details>
-
-</div><!-- end content -->
+</div><!-- end tab-content -->
 
 <!-- Footer -->
 <div class="footer">
     <span class="dicom-lock-indicator" id="dicomLockIndicator"></span>
-    <span class="footer-version" id="aboutVersion"></span>
+    <span class="footer-version" id="footerVersion"></span>
     <span class="save-indicator" id="saveIndicator">Settings saved</span>
     <button class="btn btn-primary" onclick="ahk.CloseSettings()">Close</button>
 </div>
@@ -518,6 +661,16 @@ document.addEventListener('keydown', function(e) {
         hideModal();
     }
 });
+
+/* ============================================
+   Tab Switching
+   ============================================ */
+var switchTab = function(tabId, btn) {
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('tab-' + tabId).classList.add('active');
+    btn.classList.add('active');
+};
 
 /* ============================================
    Form Data Collection

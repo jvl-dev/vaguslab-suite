@@ -88,7 +88,8 @@ class BruceSettingsGui {
         js .= "setTheme('" (isDark ? "dark" : "light") "');"
 
         ; About
-        js .= "setText('aboutVersion', 'v" this._EscapeJS(VERSION) "');"
+        js .= "setText('aboutVersion', 'Bruce Helper v" this._EscapeJS(VERSION) "');"
+        js .= "setText('footerVersion', 'v" this._EscapeJS(VERSION) "');"
         js .= "setText('updateStatusText', 'Current version: " this._EscapeJS(VERSION) "');"
 
         ; Status indicators (also used by live polling)

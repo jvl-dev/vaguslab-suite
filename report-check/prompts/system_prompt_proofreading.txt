@@ -43,7 +43,7 @@ SCOPE - Only flag these specific errors:
 • Transcription errors (wrong words from voice recognition - e.g. pleural fusion rather than pleural effusion or a missing 'No' at the beginning of a sentence)
 • Formatting inconsistencies (spacing, capitalization)
 • Mathematical errors in measurements or calculations
-• Empty or missing content under any report section heading
+• Empty, missing, or uninformatively vague content under any report section heading. Flag if a section heading is present but contains only a single word, abbreviation, or phrase that does not meaningfully describe the content of that section.
 • Content that does not seem to make sense in the context of a report (e.g. an IMPRESSION/COMMENT/CONCLUSION that contradicts something in the FINDINGS section of the report)
 • Content in the findings that should be addressed in the impression (e.g. a potentially significant finding that is raised in the FINDINGS but then not mentioned in the IMPRESSION/COMMENT/CONCLUSION)
 • Demographic inconsistencies (if patient demographics are provided):

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
 <script>
 // Apply theme + load shared CSS + local dicom theme (before paint)
 (function() {
@@ -15,53 +16,218 @@
 })();
 </script>
 <style>
-/* Titlebar - ensure Webdings font for window control buttons */
+/* ============================================
+   DICOM Service Settings — Sidebar Layout
+   ============================================ */
+
+/* Typography override — Outfit with Inter fallback */
+body {
+    font-family: 'Outfit', var(--font-family-base);
+    background: var(--color-titlebar);
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Titlebar Override ---- */
+.titlebar {
+    border-bottom: none;
+    height: 36px;
+}
+.titlebar-accent {
+    width: 3px;
+    align-self: center;
+    height: 14px;
+    margin-left: 12px;
+    background: var(--color-primary);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.titlebar-text {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
 .titlebar-btn {
     font-family: Webdings;
 }
 
-/* Main Layout */
-body {
-    background: var(--color-bg);
-    height: 100vh;
-}
+/* ---- Main Grid Layout ---- */
 .main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    grid-template-rows: 1fr auto;
     overflow: hidden;
     background: var(--color-bg);
 }
 
-/* Content */
-.content {
-    flex: 1;
+/* ---- Sidebar Navigation ---- */
+.sidebar {
+    grid-row: 1;
+    grid-column: 1;
+    background: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border-sidebar);
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
     overflow-y: auto;
-    padding: 20px 24px;
-    scroll-behavior: smooth;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 2px; }
+
+.sidebar-spacer {
+    flex: 1;
+    min-height: 8px;
 }
 
-/* Card entrance animation */
-@keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-.content .card {
-    animation: cardFadeIn 0.3s ease-out both;
-}
-.content .card:nth-child(2) { animation-delay: 0.04s; }
-.content .card:nth-child(3) { animation-delay: 0.08s; }
-.content .card:nth-child(4) { animation-delay: 0.12s; }
-
-@media (prefers-reduced-motion: reduce) {
-    .content .card { animation: none; }
-}
-
-/* Status indicator */
-.service-status {
+.tab-btn {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    text-align: left;
+    width: 100%;
+    border-left: 2px solid transparent;
+    margin-bottom: 1px;
+}
+.tab-btn:hover {
+    color: var(--color-text);
+    background: var(--color-sidebar-hover-bg);
+}
+.tab-btn.active {
+    color: var(--color-primary);
+    background: var(--color-sidebar-active-bg);
+    border-left-color: var(--color-sidebar-active-border);
+    font-weight: 600;
+}
+.tab-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
+}
+.tab-btn:hover svg { opacity: 0.7; }
+.tab-btn.active svg { opacity: 1; }
+
+/* ---- Tab Content ---- */
+.tab-content {
+    grid-row: 1;
+    grid-column: 2;
+    overflow-y: auto;
+    padding: 24px 28px;
+    scroll-behavior: smooth;
+    background-image: radial-gradient(circle, var(--color-bg-dot) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.tab-content::-webkit-scrollbar { width: 6px; }
+.tab-content::-webkit-scrollbar-track { background: transparent; }
+.tab-content::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 3px; }
+.tab-content::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
+
+/* ---- Card animation ---- */
+@keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.tab-pane.active .card {
+    animation: cardSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.tab-pane.active .card:nth-child(2) { animation-delay: 0.05s; }
+.tab-pane.active .card:nth-child(3) { animation-delay: 0.10s; }
+.tab-pane.active .card:nth-child(4) { animation-delay: 0.15s; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ---- Card hover elevation ---- */
+.card {
+    transition: box-shadow 0.25s ease;
+}
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
+}
+[data-theme="dark"] .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ---- Toggle Switches ---- */
+.toggle-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 10px;
+}
+.toggle-group:last-child { margin-bottom: 0; }
+.toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--color-toggle-off);
+    border-radius: 22px;
+    transition: background 0.2s;
+}
+.toggle-slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--color-toggle-knob);
+    border-radius: 50%;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px var(--color-toggle-shadow);
+}
+.toggle input:checked + .toggle-slider { background: var(--color-primary); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle input:disabled + .toggle-slider { opacity: 0.4; cursor: not-allowed; }
+.toggle-label {
+    font-size: 13px;
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+/* ---- Status indicators ---- */
+.status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 13px;
     color: var(--color-text-secondary);
 }
@@ -76,38 +242,15 @@ body {
 .status-dot.active {
     background: var(--color-success);
 }
-.status-text {
-    flex: 1;
-}
 
-/* Form Controls */
-.form-group label { width: 160px; }
-.form-group input[type="number"] {
-    width: 100px;
-    padding: 7px 10px;
-    border: 1px solid var(--color-border-input);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-family: inherit;
-    color: var(--color-text);
-    background: var(--color-bg-card);
-    transition: border-color var(--transition), box-shadow var(--transition);
-    outline: none;
-}
-.form-group input[type="number"]:focus {
-    border-color: var(--color-focus);
-    box-shadow: 0 0 0 2px var(--color-focus-ring);
-}
-.form-group input[type="text"] { min-width: 0; }
-
-/* Stacked form group — label on top, input row below.
-   Used for path fields so the input + Browse button get the full card width. */
+/* ---- Stacked form group ---- */
 .form-group-stacked {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-bottom: 12px;
 }
+.form-group-stacked:last-child { margin-bottom: 0; }
 .form-group-stacked label {
     font-size: 13px;
     font-weight: 500;
@@ -136,49 +279,78 @@ body {
     box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
-/* Hint text */
+/* ---- Form Controls ---- */
+.form-group {
+    flex-wrap: wrap;
+}
+.form-group label { width: auto; }
+.form-group input[type="number"] {
+    width: 80px;
+    padding: 7px 10px;
+    border: 1px solid var(--color-border-input);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg-card);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+}
+.form-group input[type="number"]:focus {
+    border-color: var(--color-focus);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+.form-group .hint {
+    width: 100%;
+    margin-top: 0;
+}
+
+/* ---- Hint text ---- */
 .hint {
     font-size: 12px;
     color: var(--color-text-muted);
     margin-top: 4px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-/* Footer */
+/* ---- Footer ---- */
 .footer {
+    grid-row: 2;
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: var(--color-bg-card);
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--color-bg-sidebar);
     border-top: 1px solid var(--color-border);
-    gap: 12px;
     flex-shrink: 0;
 }
-.footer-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.footer-version {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    user-select: none;
 }
-
-/* Save Indicator */
 .save-indicator {
     font-size: 12px;
     color: var(--color-success);
+    margin-right: auto;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-.save-indicator.visible {
-    opacity: 1;
+.save-indicator::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-success);
 }
+.save-indicator.visible { opacity: 1; }
 
-/* Scrollbar (Chromium) */
-.content::-webkit-scrollbar { width: 8px; }
-.content::-webkit-scrollbar-track { background: var(--color-bg); }
-.content::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 4px; }
-.content::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
-
-/* Modal Dialog */
+/* ---- Modal Dialog ---- */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -188,16 +360,15 @@ body {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
-.modal-overlay.active {
-    display: flex;
-    opacity: 1;
-}
+.modal-overlay.active { display: flex; opacity: 1; }
 .modal-dialog {
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius);
+    border-radius: 12px;
     box-shadow: var(--shadow-elevated);
     width: 420px;
     max-width: 90vw;
@@ -205,23 +376,23 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform: scale(0.96) translateY(8px);
-    transition: transform 0.2s ease;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.modal-overlay.active .modal-dialog {
-    transform: scale(1) translateY(0);
-}
+.modal-overlay.active .modal-dialog { transform: scale(1) translateY(0); }
 .modal-header {
     display: flex;
     align-items: center;
-    padding: 16px 20px 12px;
+    gap: 10px;
+    padding: 18px 22px 14px;
     border-bottom: 1px solid var(--color-border-light);
     font-size: 14px;
     font-weight: 600;
     color: var(--color-text);
+    letter-spacing: -0.01em;
 }
 .modal-body {
-    padding: 16px 20px;
+    padding: 18px 22px;
     font-size: 13px;
     color: var(--color-text-secondary);
     line-height: 1.6;
@@ -233,41 +404,79 @@ body {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 14px 22px;
     border-top: 1px solid var(--color-border-light);
     flex-shrink: 0;
 }
 
-/* Utility */
+/* ---- Links ---- */
+a { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+a:hover { text-decoration: underline; }
+
+/* ---- Utility ---- */
 .hidden { display: none; }
 .flex-row { display: flex; gap: var(--space-xs); }
 .flex-shrink-0 { flex-shrink: 0; }
-.flex-fill { flex: 1; max-width: none; }
-.mt-xs { margin-top: var(--space-xxs); }
 .mt-sm { margin-top: var(--space-xs); }
+.mt-md { margin-top: var(--space-sm); }
 </style>
 </head>
 <body>
 
-<!-- Titlebar -->
+<!-- Title Bar -->
 <div class="titlebar">
+    <span class="titlebar-accent"></span>
     <span class="titlebar-text">DICOM Service Settings</span>
     <span class="titlebar-btn" onclick="ahk.MinimizeWindow()" title="Minimize">0</span>
     <span class="titlebar-btn titlebar-btn-close" onclick="ahk.CloseSettings()" title="Close">r</span>
 </div>
 
 <div class="main">
-<div class="content">
 
+<!-- Sidebar Navigation -->
+<nav class="sidebar">
+    <button class="tab-btn active" onclick="switchTab('status', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1.5"/></svg>
+        Status
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="5" x2="14" y2="5"/><line x1="2" y1="11" x2="14" y2="11"/><circle cx="5" cy="5" r="1.5"/><circle cx="11" cy="11" r="1.5"/></svg>
+        Settings
+    </button>
+    <button class="tab-btn" onclick="switchTab('advanced', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h4"/><path d="M7 2v4l-3.5 6.5a1 1 0 00.9 1.5h7.2a1 1 0 00.9-1.5L9 6V2"/></svg>
+        Advanced
+    </button>
+
+    <div class="sidebar-spacer"></div>
+
+    <button class="tab-btn" onclick="switchTab('about', this)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 11V7"/><circle cx="8" cy="4.5" r="0.75" fill="currentColor" stroke="none"/></svg>
+        About
+    </button>
+</nav>
+
+<!-- Tab Content -->
+<div class="tab-content">
+
+<!-- ==================== Status Tab ==================== -->
+<div id="tab-status" class="tab-pane active">
     <div class="card">
-        <div class="card-header">Service Status</div>
-        <div class="service-status">
-            <span class="status-dot" id="statusDot"></span>
-            <span class="status-text" id="statusText">Checking...</span>
+        <div class="card-header">Service</div>
+        <div class="status-list">
+            <div class="status-item">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Checking...</span>
+            </div>
+        </div>
+        <div class="mt-md">
             <button class="btn btn-secondary" id="restartBtn" onclick="ahk.RestartService()">Restart Service</button>
         </div>
     </div>
+</div>
 
+<!-- ==================== Settings Tab ==================== -->
+<div id="tab-settings" class="tab-pane">
     <div class="card">
         <div class="card-header">DICOM Cache</div>
         <div class="form-group-stacked">
@@ -292,33 +501,67 @@ body {
     </div>
 
     <div class="card">
-        <div class="card-header">Advanced</div>
+        <div class="card-header">Appearance</div>
+        <div class="toggle-group">
+            <label class="toggle">
+                <input type="checkbox" id="DarkModeEnabled" onchange="setTheme(this.checked ? 'dark' : 'light'); autoSave();">
+                <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Dark mode</span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== Advanced Tab ==================== -->
+<div id="tab-advanced" class="tab-pane">
+    <div class="card">
+        <div class="card-header">Timing</div>
         <div class="form-group">
-            <label>Poll interval (seconds):</label>
+            <label>Poll interval:</label>
             <input type="number" id="TimerInterval" min="0.5" max="10" step="0.5" value="2.0">
+            <span class="hint">seconds between scans</span>
         </div>
         <div class="form-group">
-            <label>Search timeout (seconds):</label>
+            <label>Search timeout:</label>
             <input type="number" id="SearchTimeout" min="10" max="600" step="10" value="120">
+            <span class="hint">seconds before giving up</span>
         </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Limits</div>
         <div class="form-group">
             <label>Study cache size:</label>
             <input type="number" id="CacheSize" min="1" max="50" step="1" value="10">
+            <span class="hint">recent studies to keep</span>
         </div>
         <div class="form-group">
             <label>Max folders to scan:</label>
             <input type="number" id="MaxScanFolders" min="5" max="200" step="5" value="50">
+            <span class="hint">per search cycle</span>
         </div>
     </div>
+</div>
 
-</div><!-- end content -->
+<!-- ==================== About Tab ==================== -->
+<div id="tab-about" class="tab-pane">
+    <div class="card">
+        <div class="card-header">DICOM Service</div>
+        <div class="hint">Local DICOM cache monitor for extracting study demographics from InteleViewer.</div>
+        <div style="margin-top: 10px;">
+            <span class="hint">Contact: </span>
+            <a href="mailto:rad@vaguslab.org">rad@vaguslab.org</a>
+        </div>
+    </div>
+</div>
+
+</div><!-- end tab-content -->
 
 <!-- Footer -->
 <div class="footer">
-    <div class="footer-left">
-        <span class="save-indicator" id="saveIndicator">Settings saved</span>
-        <span class="hint" style="margin-top:0;">Changes take effect on service restart</span>
-    </div>
+    <span class="footer-version" id="footerVersion"></span>
+    <span class="save-indicator" id="saveIndicator">Settings saved</span>
+    <span class="hint" style="margin-top: 0;">Changes take effect on service restart</span>
     <button class="btn btn-primary" onclick="ahk.CloseSettings()">Close</button>
 </div>
 
@@ -386,10 +629,22 @@ document.addEventListener('keydown', function(e) {
 });
 
 /* ============================================
+   Tab Switching
+   ============================================ */
+var switchTab = function(tabId, btn) {
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('tab-' + tabId).classList.add('active');
+    btn.classList.add('active');
+};
+
+/* ============================================
    Form Data Collection
    ============================================ */
 function collectFormData() {
     var val = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+
+    var chk = function(id) { var el = document.getElementById(id); return el ? el.checked : false; };
 
     return {
         DicomCacheDirectory: val('DicomCacheDirectory'),
@@ -397,7 +652,8 @@ function collectFormData() {
         TimerInterval: val('TimerInterval'),
         SearchTimeout: val('SearchTimeout'),
         CacheSize: val('CacheSize'),
-        MaxScanFolders: val('MaxScanFolders')
+        MaxScanFolders: val('MaxScanFolders'),
+        DarkModeEnabled: chk('DarkModeEnabled')
     };
 }
 
@@ -424,10 +680,17 @@ function initAutoSaveListeners() {
     });
 }
 
+function initThemeCheckbox() {
+    var theme = new URLSearchParams(location.search).get('theme');
+    var el = document.getElementById('DarkModeEnabled');
+    if (el) el.checked = (theme === 'dark');
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAutoSaveListeners);
+    document.addEventListener('DOMContentLoaded', function() { initAutoSaveListeners(); initThemeCheckbox(); });
 } else {
     initAutoSaveListeners();
+    initThemeCheckbox();
 }
 
 /* ============================================

@@ -79,6 +79,14 @@
     --color-overlay-subtle: rgba(0,0,0,0.04);
     --color-overlay-faint: rgba(0,0,0,0.02);
 
+    /* Sidebar */
+    --color-bg-sidebar: #e4e6ea;
+    --color-border-sidebar: #d5d8dd;
+    --color-sidebar-active-bg: rgba(78,93,108,0.1);
+    --color-sidebar-active-border: var(--color-primary);
+    --color-sidebar-hover-bg: rgba(78,93,108,0.05);
+    --color-bg-dot: rgba(78,93,108,0.06);
+
     /* Semantic status backgrounds */
     --color-success-light: rgba(26,122,58,0.08);
     --color-warning-light: rgba(180,92,8,0.08);
@@ -159,6 +167,14 @@
     /* Overlay variants */
     --color-overlay-subtle: rgba(0,0,0,0.2);
     --color-overlay-faint: rgba(255,255,255,0.03);
+
+    /* Sidebar */
+    --color-bg-sidebar: #141820;
+    --color-border-sidebar: #1e242e;
+    --color-sidebar-active-bg: rgba(142,155,174,0.1);
+    --color-sidebar-active-border: var(--color-primary);
+    --color-sidebar-hover-bg: rgba(142,155,174,0.05);
+    --color-bg-dot: rgba(142,155,174,0.05);
 
     /* Semantic status backgrounds */
     --color-success-light: rgba(56,217,142,0.1);

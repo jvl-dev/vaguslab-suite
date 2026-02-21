@@ -115,6 +115,14 @@ class DicomSettingsGui {
             IniWrite(formData.Get("CacheSize", "10"), this._configFile, "service", "cache_size")
             IniWrite(formData.Get("MaxScanFolders", "50"), this._configFile, "service", "max_scan_folders")
 
+            ; Dark mode
+            if (formData.Has("DarkModeEnabled")) {
+                isDark := formData.Get("DarkModeEnabled", false)
+                isDark := (isDark = "true" || isDark = true)
+                IniWrite(isDark ? "true" : "false", this._configFile, "gui", "dark_mode")
+                this._ApplyTitleBarTheme(isDark)
+            }
+
         } catch as err {
             ; Best effort — settings GUI shouldn't crash on save errors
         }
